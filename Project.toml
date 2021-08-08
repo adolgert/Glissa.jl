@@ -1,0 +1,7 @@
+name = "Glissa"
+uuid = "1ce7c861-5d88-4300-832a-1f87046bf077"
+authors = ["Andrew Dolgert <adolgert@uw.edu>"]
+version = "0.1.0"
+
+[compat]
+julia = "1.6"
