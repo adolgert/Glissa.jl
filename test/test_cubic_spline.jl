@@ -4,6 +4,8 @@ using SafeTestsets
 using GLM
 using DataFrames
 using RCall
+using ReverseDiff
+using ForwardDiff
 
 
 @safetestset "Cubic spline matches at points" begin
@@ -68,7 +70,6 @@ end
         @test prev < 1e-5
     end
 end
-
 
 
 @safetestset "Cubic spline is continuous for uneven x" begin
@@ -155,4 +156,40 @@ end
     Glissa.project_to_monotonicity!(x, y, yp)
     yp .- hf
     @test maximum(abs.(yp .- hf)) < 1e-12
+end
+
+
+@safetestset "Cubic spline is compatible with forward diff" begin
+    x = [7.99, 8.09, 8.19, 8.7, 9.2, 10, 12, 15, 20]
+    x2 = collect(8:0.01:10)
+    y = [0, 2.76429e-5, 4.37498e-2, 0.169183, 0.469428, 0.943740, 0.998636, 0.999919, 0.999994]
+
+    function g(f::AbstractVector{T}) where {T}
+        cs = Glissa.cubic_spline(x, f, zeros(T, 2))
+        cs.(x2) 
+    end
+
+    interp = g(y)
+    jacob = ForwardDiff.jacobian(g, y)
+    @test size(jacob) == (201, length(x))
+    @test jacob[1,1] > 0
+    @test jacob[1, 9] == 0.0
+end
+
+
+@safetestset "Cubic spline is compatible with reverse diff" begin
+    x = [7.99, 8.09, 8.19, 8.7, 9.2, 10, 12, 15, 20]
+    x2 = collect(8:0.01:10)
+    f = [0, 2.76429e-5, 4.37498e-2, 0.169183, 0.469428, 0.943740, 0.998636, 0.999919, 0.999994]
+    function g(f::AbstractVector{T}, x1, x2) where {T}
+        cs = Glissa.cubic_spline(x1, f, zeros(T, 2))
+        cs.(x2) 
+    end
+    interp = g(f, x, x2)
+    f_tape = ReverseDiff.GradientTape(g, (f, x, x2))
+    compiled_f_tape = ReverseDiff.compile(f_tape)
+    inputs = (f, x, x2)
+    cfg = ReverseDiff.GradientConfig(inputs)
+    results = similar(interp)
+    ReverseDiff.gradient!(results, compiled_f_tape, inputs)
 end

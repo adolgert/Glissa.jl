@@ -12,8 +12,8 @@ This spline has one type for the abcissa and one for the ordinate coefficients.
 It should be the case that one(T) * one(X) is of type T.
 """
 struct CubicSpline{X,T}
-    τ::Vector{X}
-    c::Matrix{T}
+    τ::AbstractVector{X}
+    c::AbstractMatrix{T}
 end
 
 
@@ -23,7 +23,7 @@ function horner_in_interval(cs::CubicSpline, i, x)
 end
 
 
-function (cs::CubicSpline)(x::A) where {A <: Real}
+function (cs::CubicSpline)(x::A) where {A <: Base.Real}
     # Index of first greater-than-or-equal-to x.
     i = Sort.searchsortedfirst(cs.τ, x) - 1
     # For points off the sides, use the closest polynomial.
@@ -32,7 +32,7 @@ function (cs::CubicSpline)(x::A) where {A <: Real}
 end
 
 
-function evaluate!(cs::CubicSpline, x::Vector, y::Vector)
+function evaluate!(cs::CubicSpline, x::AbstractVector, y::AbstractVector)
     # Index of first greater-than-or-equal-to x.
     k = 1
     i = Sort.searchsortedfirst(cs.τ, x[k]) - 1
@@ -62,7 +62,7 @@ Here, ``\Delta x_i = x_{i+1} -x{i}`` and
 ``f[x_i,x_{i+1}] = \frac{f[x_{i+1}] - f[x_i]}{x_{i+1}-x_i}``
 
 """
-function global_derivatives!(τ, f::Vector{T}, fp) where {T <: Real}
+function global_derivatives!(τ, f::AbstractVector{T}, fp) where {T <: Real}
     # This implementation builds the tridiagonal matrix and then solves it.
     # You could write a Gaussian elimination to generate terms on the fly, saving memory.
     # There are N-1 equations.
@@ -102,7 +102,7 @@ Given an abcissa, τ, of length N+1 values f of length N+1, and derivatives s
 of length N+1, this computes the 4xN matrix c of cubic coefficients.
 Conte and deBoor Eq. 4.55
 """
-function cubic_spline_coefficients!(τ, f::Vector{T}, s, c) where {T <: Real}
+function cubic_spline_coefficients!(τ, f::AbstractVector{T}, s, c) where {T <: Real}
     for i = 1:(length(τ) - 1)
         c[1, i] = f[i]
         c[2, i] = s[i]
@@ -116,7 +116,7 @@ function cubic_spline_coefficients!(τ, f::Vector{T}, s, c) where {T <: Real}
 end
 
 
-function cubic_spline_flat_endpoints(τ::Vector{X}, f::Vector{T}) where {X <: Real, T <: Real}
+function cubic_spline_flat_endpoints(τ::AbstractVector{X}, f::AbstractVector{T}) where {X <: Real, T <: Real}
     N = length(τ) - 1
     s = zeros(T, N + 1)
     s[1] = zero(T)
@@ -146,12 +146,19 @@ function deboor_swartz_criterion(s::T, sm1, sp1) where {T <: Real}
     end
 end
 
+
+"""
+This comes from Hyman's paper but is modified by the R implementation of splinefun,
+which Simon Wood wrote. I didn't understand from the paper the exact structure of
+decisions to take in the function.
+"""
 function hyman_criterion(s::T, sm1, sp1) where {T <: Real}
     # Equation 2.6 "extends" equation 2.3.
     smin = min(sm1, sp1)
     smax = max(sm1, sp1)
+    # The paper doesn't specify setting s=sp1 _before_ the if-then about the sign of s.
     if sm1 * sp1 > 0
-        s = sp1
+        s = sp1  # The paper seems to say this should be set to zero.
     end
     if s >= 0
         s = min(max(0, s), T(3) * min(abs(smin), abs(smax)))
@@ -200,7 +207,7 @@ end
 struct GlobalDerivatives
 end
 
-function cubic_spline(τ::Vector{X}, f::Vector{T}, fp::Vector{T}) where {X <: Real, T <: Real}
+function cubic_spline(τ::AbstractVector{X}, f::AbstractVector{T}, fp::AbstractVector{T}) where {X <: Real, T <: Real}
     N = length(τ) - 1
     s = zeros(T, N + 1)
     s[1] = fp[1]
