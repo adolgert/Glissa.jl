@@ -3,5 +3,9 @@ uuid = "1ce7c861-5d88-4300-832a-1f87046bf077"
 authors = ["Andrew Dolgert <adolgert@uw.edu>"]
 version = "0.1.0"
 
+[deps]
+Dictionaries = "85a47980-9c8c-11e8-2b9f-f7ca1fa99fb4"
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+
 [compat]
 julia = "1.6"

@@ -2,5 +2,5 @@ using Glissa
 using Test
 
 @testset "Glissa.jl" begin
-    # Write your tests here.
+    source("test_cubic_spline.jl")
 end
