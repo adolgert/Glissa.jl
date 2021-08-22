@@ -23,7 +23,7 @@ function horner_in_interval(cs::CubicSpline, i, x)
 end
 
 
-function (cs::CubicSpline)(x::A) where {A <: Base.Real}
+function (cs::CubicSpline)(x::A) where {A <: Real}
     # Index of first greater-than-or-equal-to x.
     i = Sort.searchsortedfirst(cs.τ, x) - 1
     # For points off the sides, use the closest polynomial.
@@ -44,6 +44,28 @@ function evaluate!(cs::CubicSpline, x::AbstractVector, y::AbstractVector)
             i += 1
         end
     end
+end
+
+
+function integral_in_interval(cs::CubicSpline, i, x::A) where {A <: Real}
+    Δ = x - cs.τ[i]
+    (((A(1/4)*cs.c[4, i] * Δ + A(1/3)*cs.c[3, i]) * Δ + A(1/2)*cs.c[2, i]) * Δ + cs.c[1, i])*Δ
+end
+
+
+function integrate(cs::CubicSpline, x1::A, x2::A) where {A <: Real}
+    # Index of first greater-than-or-equal-to x.
+    i = Sort.searchsortedfirst(cs.τ, x1) - 1
+    # For points off the sides, use the closest polynomial.
+    i = max(min(length(cs.τ) - 1, i), 1)
+    j = Sort.searchsortedfirst(cs.τ, x2) - 1
+    # For points off the sides, use the closest polynomial.
+    j = max(min(length(cs.τ) - 1, j), 1)
+    intervening_intervals = zero(A)
+    for k in i:(j-1)
+        intervening_intervals += integral_in_interval(cs, k, cs.τ[k + 1])
+    end
+    intervening_intervals + integral_in_interval(cs, j, x2) - integral_in_interval(cs, i, x1)
 end
 
 

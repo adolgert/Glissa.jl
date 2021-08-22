@@ -6,6 +6,8 @@ using DataFrames
 using RCall
 using ReverseDiff
 using ForwardDiff
+using Random
+using Distributions
 
 
 @safetestset "Cubic spline matches at points" begin
@@ -192,4 +194,73 @@ end
     cfg = ReverseDiff.GradientConfig(inputs)
     results = similar(interp)
     ReverseDiff.gradient!(results, compiled_f_tape, inputs)
+end
+
+
+@safetestset "Cubic spline integrates a flat line" begin
+    x = Float64[0, 1, 3, 5]
+    y = Float64[1, 1, 1, 1]
+    cs = Glissa.cubic_spline(x, y, [0.0, 0.0])
+    @test abs(cs(2.5) - 1) < 1e-6
+    exact(z) = z
+    rng = MersenneTwister(9234724)
+    for j in 1:100
+        a = rand(rng, Uniform(0, 5))
+        b = rand(rng, Uniform(a, 5))
+        found = Glissa.integrate(cs, a, b)
+        @test abs(found - exact(b) + exact(a)) < 1e-9
+    end
+end
+
+@safetestset "Cubic spline integrates a sloped line" begin
+    x = Float64[0, 1, 3, 5]
+    y = Float64[0, 1, 3, 5]
+    cs = Glissa.cubic_spline(x, y, [0.0, 0.0])
+    @test abs(cs(2.5) - 2.5) < 1e-6
+    exact(z) = 0.5 * z^2
+    rng = MersenneTwister(9292734)
+    for j in 1:100
+        a = rand(rng, Uniform(0, 5))
+        b = rand(rng, Uniform(a, 5))
+        found = Glissa.integrate(cs, a, b)
+        @test abs(found - exact(b) + exact(a)) < 1e-9
+    end
+end
+
+
+@safetestset "Cubic spline integrates a sloped line" begin
+    Δ = 0.1
+    x = collect(0:Δ:5)
+    y = x.^2
+    cs = Glissa.cubic_spline(x, y, [0.0, 0.0])
+    for q in [0.3, 1.2, 4.7, 4.99]
+        @test abs(cs(q) - q^2) < Δ^3
+    end
+    exact(z) = z^3 / 3
+    rng = MersenneTwister(89192734)
+    for j in 1:100
+        a = rand(rng, Uniform(0, 5))
+        b = rand(rng, Uniform(a, 5))
+        found = Glissa.integrate(cs, a, b)
+        @test abs(found - exact(b) + exact(a)) < Δ^3
+    end
+end
+
+
+@safetestset "Cubic spline integrates a cosine" begin
+    Δ = π / 30
+    x = collect(0:Δ:π)
+    y = cos.(x)
+    cs = Glissa.cubic_spline(x, y, [0.0, 0.0])
+    for q in [0.3, 1.2, 1.7, 2.99]
+        @test abs(cs(q) - cos(q)) < Δ^3
+    end
+    exact(z) = sin(z)
+    rng = MersenneTwister(89192734)
+    for j in 1:100
+        a = rand(rng, Uniform(0, 3))
+        b = rand(rng, Uniform(a, 3))
+        found = Glissa.integrate(cs, a, b)
+        @test abs(found - exact(b) + exact(a)) < Δ^3
+    end
 end
