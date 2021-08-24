@@ -6,6 +6,8 @@ version = "0.1.0"
 [deps]
 Dictionaries = "85a47980-9c8c-11e8-2b9f-f7ca1fa99fb4"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+Revise = "295af30f-e4ad-537b-8983-00126c2a3abe"
+TestEnv = "1e6cf692-eddd-4d53-88a5-2d735e33781b"
 
 [compat]
 julia = "1.6"
@@ -22,5 +24,4 @@ SafeTestsets = "1bc83da4-3b8d-516f-aca4-4fe02f6d838f"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["DataFrames", "Distributions", "ForwardDiff", "GLM", "Random",
-    "RCall", "ReverseDiff", "SafeTestsets", "Test"]
+test = ["DataFrames", "Distributions", "ForwardDiff", "GLM", "Random", "RCall", "ReverseDiff", "Test"]

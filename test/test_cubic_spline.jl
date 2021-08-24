@@ -156,13 +156,46 @@ end
         b
     }
     """
-
     x = collect(0:0.1:π)
     y = sin.(x)
     yp = cos.(x)
     hf = collect(R"""hyman_filter($x, $y, $yp)""")
     Glissa.project_to_monotonicity!(x, y, yp)
     @test maximum(abs.(yp .- hf)) < 1e-12
+
+    # This example is constructed by hand to need monotonic smoothing.
+    x = [7.99, 8.09, 8.19, 8.7, 9.2, 10, 12, 15, 20]
+    f = [0, 2.76429e-5, 4.37498e-2, 0.169183, 0.469428, 0.943740, 0.998636, 0.999919, 0.999994]
+    fp = similar(f)
+    Glissa.global_derivatives!(x, f, fp)
+    hf = collect(R"""hyman_filter($x, $f, $fp)""")
+    # Assert that the uncorrected slopes are different from corrected ones.
+    @test maximum(abs.(hf - fp)) > 1e-10
+    Glissa.project_to_monotonicity!(x, f, fp)
+    # After correction, they agree with the R version.
+    @test maximum(abs.(fp .- hf)) < 1e-12
+
+    R"""spl_coef_conv <- function(x, y, b)
+    {
+        n <- length(x)
+        h <- diff(x); y <- -diff(y)
+        b0 <- b[-n]; b1 <- b[-1L]
+        cc <- -(3*y + (2*b0 + b1)*h) / h^2
+        c1 <- (3*y[n-1L] + (b0[n-1L] + 2*b1[n-1L])*h[n-1L]) / h[n-1L]^2
+        c <- c(cc, c1)
+        dd <- (2*y/h + b0 + b1) / h^2
+        d <- c(dd, dd[n-1L])
+        list(c, d)
+    }
+    """
+    cd = R"""spl_coef_conv($x, $f, $fp)"""
+    c = collect(cd[1])
+    d = collect(cd[2])
+    C = zeros(Float64, 4, length(x) - 1)
+    Glissa.hyman_coefficients!(x, f, fp, C)
+    # The R functions define vectors that are 1 longer.
+    @test maximum(abs.(C[3, :] - c[1:(end-1)])) < 1e-12
+    @test maximum(abs.(C[4, :] - d[1:(end-1)])) < 1e-12
 end
 
 

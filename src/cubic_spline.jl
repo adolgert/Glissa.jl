@@ -138,18 +138,6 @@ function cubic_spline_coefficients!(τ, f::AbstractVector{T}, s, c) where {T <: 
 end
 
 
-# function cubic_spline_flat_endpoints(τ::AbstractVector{X}, f::AbstractVector{T}) where {X <: Real, T <: Real}
-#     N = length(τ) - 1
-#     s = zeros(T, N + 1)
-#     s[1] = zero(T)
-#     s[end] = zero(T)
-#     global_derivatives!(τ, f, s)
-#     c = zeros(T, 4, N)
-#     cubic_spline_coefficients!(τ, f, s, c)
-#     CubicSpline{X,T}(τ, c)
-# end
-
-
 """
 "Accurate Monotonicity Preserving Cubic Interpolation" by James M Hyman. 1983.
 """
@@ -210,6 +198,34 @@ function project_to_monotonicity!(x, f, s)
     nothing
 end
 
+
+"""
+This is how splinefun sets the coefficients. Seems to have the same
+result as the code above.
+"""
+function hyman_coefficients!(τ, f::AbstractVector{T}, s, c) where {T <: Real}
+    for i = 1:(length(τ) - 1)
+        c[1, i] = f[i]
+        c[2, i] = s[i]
+        if i < length(τ)
+            Δ = τ[i + 1] - τ[i]
+            y = -(f[i + 1] - f[i])
+            c[3, i] = -(3y + (2s[i] + s[i+1])Δ) / Δ^2
+            c[4, i] = (2y/Δ + s[i] + s[i+1])/Δ^2
+        else
+            # That's correct. This doesn't get called, but R's splinefun sets these.
+            # Leaving here until I figure out why we need a polynomial defined for the
+            # region to the right of the last input point.
+            Δ = τ[i] - τ[i-1]
+            y = -(f[i] - f[i-1])
+            c[3, i] = (3y + (s[i-1] + 2s[i])Δ) / Δ^2
+            c[4, i] = c[4, i-1]
+        end
+    end
+    nothing
+end
+
+
 # Options for endpoints
 struct ZeroDerivativeEndpoints
 end
@@ -224,16 +240,19 @@ end
 function project_slope!(::FreeSlope, τ, f, s)
 end
 
+
 struct Monotonic
 end
 
 function project_slope!(::Monotonic, τ, f, s)
-    global_derivatives!(τ, f, s)
+    project_to_monotonicity!(τ, f, s)
 end
+
 
 # Options for determination of derivatives
 struct GlobalDerivatives
 end
+
 
 function cubic_spline(
     τ::AbstractVector{X}, f::AbstractVector{T}, fp; slope=FreeSlope()
