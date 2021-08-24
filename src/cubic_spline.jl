@@ -138,16 +138,16 @@ function cubic_spline_coefficients!(τ, f::AbstractVector{T}, s, c) where {T <: 
 end
 
 
-function cubic_spline_flat_endpoints(τ::AbstractVector{X}, f::AbstractVector{T}) where {X <: Real, T <: Real}
-    N = length(τ) - 1
-    s = zeros(T, N + 1)
-    s[1] = zero(T)
-    s[end] = zero(T)
-    global_derivatives!(τ, f, s)
-    c = zeros(T, 4, N)
-    cubic_spline_coefficients!(τ, f, s, c)
-    CubicSpline{X,T}(τ, c)
-end
+# function cubic_spline_flat_endpoints(τ::AbstractVector{X}, f::AbstractVector{T}) where {X <: Real, T <: Real}
+#     N = length(τ) - 1
+#     s = zeros(T, N + 1)
+#     s[1] = zero(T)
+#     s[end] = zero(T)
+#     global_derivatives!(τ, f, s)
+#     c = zeros(T, 4, N)
+#     cubic_spline_coefficients!(τ, f, s, c)
+#     CubicSpline{X,T}(τ, c)
+# end
 
 
 """
@@ -176,16 +176,15 @@ decisions to take in the function.
 """
 function hyman_criterion(s::T, sm1, sp1) where {T <: Real}
     # Equation 2.6 "extends" equation 2.3.
-    smin = min(sm1, sp1)
-    smax = max(sm1, sp1)
     # The paper doesn't specify setting s=sp1 _before_ the if-then about the sign of s.
+    σ = s
     if sm1 * sp1 > 0
-        s = sp1  # The paper seems to say this should be set to zero.
+        σ = sp1  # The paper seems to say this should be set to zero.
     end
-    if s >= 0
-        s = min(max(0, s), T(3) * min(abs(smin), abs(smax)))
+    if σ >= 0
+        s = min(max(0, s), T(3) * min(abs(sm1), abs(sp1)))
     else
-        s = max(min(0, s), -T(3) * min(abs(smin), abs(smax)))
+        s = max(min(0, s), -T(3) * min(abs(sm1), abs(sp1)))
     end
     s
 end
@@ -199,8 +198,8 @@ function project_to_monotonicity!(x, f, s)
     for i in 2:(length(s)-1)
         s[i] = hyman_criterion(
             s[i],
-            (f[i+1] - f[i])/(x[i+1] - x[i]),
-            (f[i] - f[i-1])/(x[i] - x[i-1])
+            (f[i] - f[i-1])/(x[i] - x[i-1]),
+            (f[i+1] - f[i])/(x[i+1] - x[i])
             )
     end
     s[end] = hyman_criterion(
@@ -219,23 +218,42 @@ struct FlatEndpoints
 end
 
 # Options for monotonicity.
-struct FreeFit
+struct FreeSlope
 end
 
-struct MonotonicFit
+function project_slope!(::FreeSlope, τ, f, s)
+end
+
+struct Monotonic
+end
+
+function project_slope!(::Monotonic, τ, f, s)
+    global_derivatives!(τ, f, s)
 end
 
 # Options for determination of derivatives
 struct GlobalDerivatives
 end
 
-function cubic_spline(τ::AbstractVector{X}, f::AbstractVector{T}, fp::AbstractVector{T}) where {X <: Real, T <: Real}
+function cubic_spline(
+    τ::AbstractVector{X}, f::AbstractVector{T}, fp; slope=FreeSlope()
+    ) where {X <: Real, T <: Real}
+
+    cubic_spline(τ, f, convert(typeof(f), fp); slope = slope)
+end
+
+
+function cubic_spline(
+    τ::AbstractVector{X}, f::AbstractVector{T}, fp::AbstractVector{T};
+    slope=FreeSlope()
+    ) where {X <: Real, T <: Real}
+
     N = length(τ) - 1
     s = zeros(T, N + 1)
     s[1] = fp[1]
     s[end] = fp[2]
     global_derivatives!(τ, f, s)
-    project_to_monotonicity!(τ, f, s)
+    project_slope!(slope, τ, f, s)
     c = zeros(T, 4, N)
     cubic_spline_coefficients!(τ, f, s, c)
     CubicSpline{X,T}(τ, c)
