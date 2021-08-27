@@ -319,3 +319,47 @@ end
         @test abs(found - exact(b) + exact(a)) < Δ^3
     end
 end
+
+@testset "Cubic spline derivative" begin
+    using Glissa
+    cs = CubicSpline{Int,Float64}([0, 1, 2],
+        Float64[
+            1 2;
+            3 7;
+            4 0;
+            1 -1
+        ]
+    )
+    csprime = Glissa.derivative(cs)
+    @test size(csprime.c) == (3, 2)
+    @test csprime.c ≈ Float64[
+        3 7;
+        8 0;
+        3 -3
+    ]
+end
+
+@testset "Cubic spline multiplication" begin
+    using Glissa
+    cs1 = CubicSpline{Int,Float64}([0, 1, 2],
+        Float64[
+            1 2;
+            3 7;
+            4 0
+        ]
+    )
+    using Glissa
+    cs2 = CubicSpline{Int,Float64}([0, 1, 2],
+        Float64[
+            2 2;
+            1 -2
+        ]
+    )
+    cs3 = cs1 * cs2
+    @test cs3.c ≈ Float64[
+        2 4;
+        7 10;
+        11 -14;
+        4 0
+    ]
+end
