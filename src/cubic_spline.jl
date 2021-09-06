@@ -39,9 +39,6 @@ function horner_in_interval(cs::CubicSpline{X,T}, i, x) where {X,T}
 end
 
 
-"""
-Evaluate the spline at x.
-"""
 function (cs::CubicSpline)(x::A) where {A <: Real}
     # Index of first greater-than-or-equal-to x.
     i = Sort.searchsortedfirst(cs.τ, x) - 1
