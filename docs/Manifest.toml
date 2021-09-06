@@ -12,12 +12,6 @@ uuid = "2a0f44e3-6c83-55bd-87e4-b1978d98bd5f"
 deps = ["Printf"]
 uuid = "ade2ca70-3891-5945-98fb-dc099432e06a"
 
-[[Dictionaries]]
-deps = ["Indexing", "Random"]
-git-tree-sha1 = "6eafb1f48014b50f9b25f8d37cf6684cea01382c"
-uuid = "85a47980-9c8c-11e8-2b9f-f7ca1fa99fb4"
-version = "0.3.11"
-
 [[DocStringExtensions]]
 deps = ["LibGit2"]
 git-tree-sha1 = "a32185f5428d3986f47c2ab78b1f216d5e6cc96f"
@@ -31,7 +25,7 @@ uuid = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
 version = "0.27.5"
 
 [[Glissa]]
-deps = ["Dictionaries", "LinearAlgebra"]
+deps = ["LinearAlgebra"]
 path = "/home/adolgert/dev/Glissa"
 uuid = "1ce7c861-5d88-4300-832a-1f87046bf077"
 version = "0.1.0"
