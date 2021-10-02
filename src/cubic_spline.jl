@@ -10,6 +10,9 @@ At each interval, the polynomial is in Horner Form,
 
 This spline has one type for the abcissa and one for the ordinate coefficients.
 It should be the case that one(T) * one(X) is of type T.
+
+This can be a spline of another order. It's just a matter of the dimensions
+of the coefficient array, `c`.
 """
 struct CubicSpline{X,T}
     τ::AbstractVector{X}
@@ -17,9 +20,22 @@ struct CubicSpline{X,T}
 end
 
 
-function horner_in_interval(cs::CubicSpline, i, x)
+"""
+((cs.c[4, i] * Δ + cs.c[3, i]) * Δ + cs.c[2, i]) * Δ + cs.c[1, i]
+"""
+function horner_in_interval(cs::CubicSpline{X,T}, i, x) where {X,T}
     Δ = x - cs.τ[i]
-    ((cs.c[4, i] * Δ + cs.c[3, i]) * Δ + cs.c[2, i]) * Δ + cs.c[1, i]
+    m = size(cs.c, 1)
+    if m > 0
+        total = cs.c[m, i]
+        for d = (m - 1):-1:1
+            total *= Δ
+            total += cs.c[d, i]
+        end
+        total
+    else
+        zero(T)
+    end
 end
 
 
@@ -46,13 +62,29 @@ function evaluate!(cs::CubicSpline, x::AbstractVector, y::AbstractVector)
     end
 end
 
-
-function integral_in_interval(cs::CubicSpline, i, x::A) where {A <: Real}
+"""
+Integrate a spline from a knot at `i` to the value `x`.
+# (((A(1/4)*cs.c[4, i] * Δ + A(1/3)*cs.c[3, i]) * Δ + A(1/2)*cs.c[2, i]) * Δ + cs.c[1, i])*Δ
+"""
+function integral_in_interval(cs::CubicSpline{X,T}, i, x::A) where {A <: Real, X, T}
     Δ = x - cs.τ[i]
-    (((A(1/4)*cs.c[4, i] * Δ + A(1/3)*cs.c[3, i]) * Δ + A(1/2)*cs.c[2, i]) * Δ + cs.c[1, i])*Δ
+    m = size(cs.c, 1)
+    if m > 0
+        total = zero(T)
+        for d = m:-1:1
+            total += cs.c[d, i] / T(d)
+            total *= Δ
+        end
+        total
+    else
+        zero(T)
+    end
 end
 
 
+"""
+Integrate a spline from `x1` to `x2`.
+"""
 function integrate(cs::CubicSpline, x1::A, x2::A) where {A <: Real}
     # Index of first greater-than-or-equal-to x.
     i = Sort.searchsortedfirst(cs.τ, x1) - 1
@@ -66,6 +98,40 @@ function integrate(cs::CubicSpline, x1::A, x2::A) where {A <: Real}
         intervening_intervals += integral_in_interval(cs, k, cs.τ[k + 1])
     end
     intervening_intervals + integral_in_interval(cs, j, x2) - integral_in_interval(cs, i, x1)
+end
+
+
+"""
+Given a spline, create a new spline that is its derivative.
+"""
+function derivative(cs::CubicSpline{X,T}) where {X,T}
+    m = size(cs.c, 1)
+    c2 = similar(cs.c[2:m, :])
+    for i = 1:size(cs.c, 2)
+        for d = 1:(m - 1)
+            c2[d, i] = T(d) * cs.c[d + 1, i]
+        end
+    end
+    CubicSpline{X,T}(cs.τ, c2)
+end
+
+
+"""
+Multiply two splines of order `m1` and `m2` to get a spline of order `m1+m2`.
+This only works if the two splines have the same abcissa.
+"""
+function Base.:*(cs1::CubicSpline{X,T}, cs2::CubicSpline{X,T}) where {X,T}
+    m1 = size(cs1.c, 1)
+    m2 = size(cs2.c, 1)
+    c3 = zeros(T, m1 + m2 - 1, size(cs1.c, 2))
+    for i in 1:size(cs1.c, 2)
+        for d1 = 1:m1
+            for d2 = 1:m2
+                c3[d1 + d2 - 1, i] += cs1.c[d1, i] * cs2.c[d2, i]
+            end
+        end
+    end
+    CubicSpline{X, T}(cs1.τ, c3)
 end
 
 
@@ -114,7 +180,8 @@ function global_derivatives!(τ, f::AbstractVector{T}, fp) where {T <: Real}
     rhs[1] -= fp[1] * (τ[3] - τ[2])  # i = 2, (\Delta x_i) s_{i-1}
     rhs[N - 1] -= fp[end] * (τ[N] - τ[N - 1])  # i = N, \Delta x_{i-1} s_{i+1}
     tmat = Tridiagonal(dl, d, du)
-    fp[2:(end - 1)] .= tmat \ rhs
+    fpans = tmat \ rhs
+    fp[2:(end - 1)] .= fpans
     nothing
 end
 
@@ -135,18 +202,6 @@ function cubic_spline_coefficients!(τ, f::AbstractVector{T}, s, c) where {T <: 
         c[4, i] = c4p / Δ
     end
     nothing
-end
-
-
-function cubic_spline_flat_endpoints(τ::AbstractVector{X}, f::AbstractVector{T}) where {X <: Real, T <: Real}
-    N = length(τ) - 1
-    s = zeros(T, N + 1)
-    s[1] = zero(T)
-    s[end] = zero(T)
-    global_derivatives!(τ, f, s)
-    c = zeros(T, 4, N)
-    cubic_spline_coefficients!(τ, f, s, c)
-    CubicSpline{X,T}(τ, c)
 end
 
 
@@ -176,16 +231,15 @@ decisions to take in the function.
 """
 function hyman_criterion(s::T, sm1, sp1) where {T <: Real}
     # Equation 2.6 "extends" equation 2.3.
-    smin = min(sm1, sp1)
-    smax = max(sm1, sp1)
     # The paper doesn't specify setting s=sp1 _before_ the if-then about the sign of s.
+    σ = s
     if sm1 * sp1 > 0
-        s = sp1  # The paper seems to say this should be set to zero.
+        σ = sp1  # The paper seems to say this should be set to zero.
     end
-    if s >= 0
-        s = min(max(0, s), T(3) * min(abs(smin), abs(smax)))
+    if σ >= 0
+        s = min(max(0, s), T(3) * min(abs(sm1), abs(sp1)))
     else
-        s = max(min(0, s), -T(3) * min(abs(smin), abs(smax)))
+        s = max(min(0, s), -T(3) * min(abs(sm1), abs(sp1)))
     end
     s
 end
@@ -199,8 +253,8 @@ function project_to_monotonicity!(x, f, s)
     for i in 2:(length(s)-1)
         s[i] = hyman_criterion(
             s[i],
-            (f[i+1] - f[i])/(x[i+1] - x[i]),
-            (f[i] - f[i-1])/(x[i] - x[i-1])
+            (f[i] - f[i-1])/(x[i] - x[i-1]),
+            (f[i+1] - f[i])/(x[i+1] - x[i])
             )
     end
     s[end] = hyman_criterion(
@@ -211,6 +265,34 @@ function project_to_monotonicity!(x, f, s)
     nothing
 end
 
+
+"""
+This is how splinefun sets the coefficients. Seems to have the same
+result as the code above.
+"""
+function hyman_coefficients!(τ, f::AbstractVector{T}, s, c) where {T <: Real}
+    for i = 1:(length(τ) - 1)
+        c[1, i] = f[i]
+        c[2, i] = s[i]
+        if i < length(τ)
+            Δ = τ[i + 1] - τ[i]
+            y = -(f[i + 1] - f[i])
+            c[3, i] = -(3y + (2s[i] + s[i+1])Δ) / Δ^2
+            c[4, i] = (2y/Δ + s[i] + s[i+1])/Δ^2
+        else
+            # That's correct. This doesn't get called, but R's splinefun sets these.
+            # Leaving here until I figure out why we need a polynomial defined for the
+            # region to the right of the last input point.
+            Δ = τ[i] - τ[i-1]
+            y = -(f[i] - f[i-1])
+            c[3, i] = (3y + (s[i-1] + 2s[i])Δ) / Δ^2
+            c[4, i] = c[4, i-1]
+        end
+    end
+    nothing
+end
+
+
 # Options for endpoints
 struct ZeroDerivativeEndpoints
 end
@@ -219,23 +301,45 @@ struct FlatEndpoints
 end
 
 # Options for monotonicity.
-struct FreeFit
+struct FreeSlope
 end
 
-struct MonotonicFit
+function project_slope!(::FreeSlope, τ, f, s)
 end
+
+
+struct Monotonic
+end
+
+function project_slope!(::Monotonic, τ, f, s)
+    project_to_monotonicity!(τ, f, s)
+end
+
 
 # Options for determination of derivatives
 struct GlobalDerivatives
 end
 
-function cubic_spline(τ::AbstractVector{X}, f::AbstractVector{T}, fp::AbstractVector{T}) where {X <: Real, T <: Real}
+
+function cubic_spline(
+    τ::AbstractVector{X}, f::AbstractVector{T}, fp; slope=FreeSlope()
+    ) where {X <: Real, T <: Real}
+
+    cubic_spline(τ, f, convert(typeof(f), fp); slope = slope)
+end
+
+
+function cubic_spline(
+    τ::AbstractVector{X}, f::AbstractVector{T}, fp::AbstractVector{T};
+    slope=FreeSlope()
+    ) where {X <: Real, T <: Real}
+
     N = length(τ) - 1
     s = zeros(T, N + 1)
     s[1] = fp[1]
     s[end] = fp[2]
     global_derivatives!(τ, f, s)
-    project_to_monotonicity!(τ, f, s)
+    project_slope!(slope, τ, f, s)
     c = zeros(T, 4, N)
     cubic_spline_coefficients!(τ, f, s, c)
     CubicSpline{X,T}(τ, c)

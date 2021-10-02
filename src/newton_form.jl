@@ -26,10 +26,6 @@ function NewtonForm(τ::Vector, f::Vector{T}) where {T <: Real}
 end
 
 
-"""
-Evaluate a NewtonForm at x.
-Algorithm 4.1 in deBoor.
-"""
 function (nf::NewtonForm{T})(x) where {T}
     k = len(nf.a)
     total = zero(T)

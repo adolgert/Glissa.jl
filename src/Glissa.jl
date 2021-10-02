@@ -7,8 +7,9 @@ include("bspline.jl")
 include("cubic_spline.jl")
 
 export CubicSpline
-export cubic_spline_flat_endpoints
 export cubic_spline
 export evaluate!
+export FreeSlope
+export Monotonic
 
 end
