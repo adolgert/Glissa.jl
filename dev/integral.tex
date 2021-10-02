@@ -1,0 +1,17 @@
+\documentclass{article}
+\title{Integral of Cubic Splines}
+\begin{document}
+This represents cubic splines as their Newton Form. Using $m$ as the order, so that
+the degree is $m-1$,
+\begin{equation}
+ p_j(x) = \sum_{i=1}^{i=m} a_i(x-x_j)^{i-1}
+\end{equation}
+The integral of this polynomial between $x_i$ and $x$ is
+\begin{equation}
+ p_j(x) = \sum_{i=1}^{i=m} \left.\frac{a_i}{i}(x-x_j)^i\right|_{x_j}^{x}
+\end{equation}
+The integral across an interval, $\Delta x_j=[x_j,x_{j+1})$, is
+\begin{equation}
+ p_j(x) = \sum_{i=1}^{i=m} \frac{a_i}{i}\left[(x_{j+1}-x_{j})^i - (x_j-x_j)^i\right] = \sum_{i=1}^{i=m} \frac{a_i}{i}(x_{j+1}-x_{j})^i.
+\end{equation}
+\end{document}
