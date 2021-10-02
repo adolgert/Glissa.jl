@@ -322,9 +322,9 @@ end
 
 @testset "Cubic spline derivative" begin
     using Glissa
-    cs = CubicSpline{Int,Float64}([0, 1, 2],
+    cs = PolynomialSpline{Int,Float64}([0, 1, 2],
         Float64[
-            1 2;
+            1 2
             3 7;
             4 0;
             1 -1
@@ -341,7 +341,7 @@ end
 
 @testset "Cubic spline multiplication" begin
     using Glissa
-    cs1 = CubicSpline{Int,Float64}([0, 1, 2],
+    cs1 = PolynomialSpline{Int,Float64}([0, 1, 2],
         Float64[
             1 2;
             3 7;
@@ -349,7 +349,7 @@ end
         ]
     )
     using Glissa
-    cs2 = CubicSpline{Int,Float64}([0, 1, 2],
+    cs2 = PolynomialSpline{Int,Float64}([0, 1, 2],
         Float64[
             2 2;
             1 -2

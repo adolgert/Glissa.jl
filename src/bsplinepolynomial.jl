@@ -84,6 +84,8 @@ end
 # If you want a b-spline on a subset of an axis, use an array view.
 # This is the least efficient way to calculate these coefficients, but it makes
 # explicit the continuity conditions that lead to a solution.
+# `i` is the index of the leftmost point, counting points by their multiplicity,
+# so a point with multiplicity of 3 is three points.
 function bspline_by_matrix!(
   axis::AbstractArray{T}, coeffs::AbstractArray{T}, multiplicity::AbstractVector{Int},
   order, normalized
@@ -155,6 +157,16 @@ coeffs = zeros(T, ord, ord)
 multiplicity = ones(Int, ord)
 bspline_by_matrix!(axis, coeffs, multiplicity, ord, :N)
 
+T = Rational{Int64}
+deg = 2  # degree of polynomial.
+ord = deg + 1  # order of polynomial.
+axis = collect(zero(T):(T(ord) - 1))
+coeffs = zeros(T, ord, ord - 1)
+multiplicity = ones(Int, ord - 1)
+multiplicity[2] = 2
+bspline_by_matrix!(axis, coeffs, multiplicity, ord, :N)
+
+coeffs
 # We can compare that with Wikipedia's order 3 cardinal B-spline using symbolic math.
 using Symbolics
 @variables x
