@@ -31,7 +31,7 @@ function valueat!(mat::AbstractArray{T}, axis, interval, row, side, scale, order
   end
   for i in 1:order
     col = i + (interval - 1) * order
-    mat[row, col] = x^(i - 1) * scale
+    mat[row, col] += x^(i - 1) * scale
   end
 end
 
@@ -52,18 +52,17 @@ function derivat!(mat::AbstractArray{T}, axis, j, interval, row, side, scale, or
   end
   for i in (1 + j):order  # This drops terms b/c of the derivative.
     col = i + (interval - 1) * order
-    mat[row, col] = dprod(i-j, i-1) * x^(i - j - 1) * scale
+    mat[row, col] += dprod(i-j, i-1) * x^(i - j - 1) * scale
   end
   return nothing
 end
 
 # Q(x) is normalized so that its integral is 1 / order
 function integralat!(mat::AbstractArray{T}, axis, interval, row, order) where {T}
-  order = length(axis) - 1
-  x = axis[interval + 1] - axis[interval]
+  # println("$(length(axis)) $interval")
   for i in 1:order
     col = i + (interval - 1) * order
-    mat[row, col] = (axis[interval + 1]^i - axis[interval]^i) / i
+    mat[row, col] += (axis[interval + 1]- axis[interval])^i / i
   end
   return nothing
 end
@@ -71,9 +70,8 @@ end
 
 # N(x) is normalized so that the sum over the internal axis points is 1.
 function pointsum!(mat::AbstractArray{T}, axis, interval, row, order) where {T}
-  x = axis[interval + 1] - axis[interval]
   col = 1 + (interval - 1) * order
-  mat[row, col] = 1
+  mat[row, col] += 1
   return nothing
 end
 
@@ -93,23 +91,28 @@ function bspline_by_matrix!(
 
   degree = order - 1
   multiples = sum(multiplicity .- 1)
-  vcnt = order - multiples
+  interval_cnt = order - multiples  # The number of intervals.
+  @assert interval_cnt == length(axis) - 1
   @assert order == length(axis) - 1 + multiples
-  @assert vcnt == size(coeffs, 2)
-  @assert vcnt == length(multiplicity)
-  mat = zeros(T, vcnt * order, vcnt * order)
+  @assert length(axis) == length(multiplicity)
+  @assert length(axis) == size(coeffs, 2)
+  mat = zeros(T, interval_cnt * order, interval_cnt * order)
+  coeffs .= zero(T)
 
   # At the left-hand side
   row_idx = 1
   for deridx in 0:(degree - multiplicity[1])
+    # Left side of first interval.
     derivat!(mat, axis, deridx, 1, row_idx, :Left, 1, order)
     row_idx += 1
   end
 
   # Internal nodes
-  for k in 1:(degree - multiples)
+  for k in 1:(interval_cnt - 1)
     # At each join, the derivatives match.
-    for deridx in 0:(degree - multiplicity[k])
+    # k + 1 because it's multiplicity of the vertex, which is 1 + interval index.
+    for deridx in 0:(degree - multiplicity[k + 1])
+      # Here, k is the index of the interval.
       derivat!(mat, axis, deridx, k, row_idx, :Right, -1, order)
       derivat!(mat, axis, deridx, k + 1, row_idx, :Left, 1, order)
       row_idx += 1
@@ -117,30 +120,34 @@ function bspline_by_matrix!(
   end
 
   # At the right-hand side
-  for deridx in 0:(degree - multiplicity[vcnt])
-    derivat!(mat, axis, deridx, vcnt, row_idx, :Right, 1, order)
+  for deridx in 0:(degree - multiplicity[interval_cnt + 1])
+    # Right side of last interval.
+    derivat!(mat, axis, deridx, interval_cnt, row_idx, :Right, 1, order)
     row_idx += 1
   end
 
   if normalized == :Q
     # The last constraint is that the integral over the b-spline is one.
-    for int_idx in 1:order
+    for int_idx in 1:interval_cnt
       integralat!(mat, axis, int_idx, row_idx, order)
     end
-    rhs = zeros(T, vcnt * order)
+    rhs = zeros(T, interval_cnt * order)
     rhs[end] = one(T) / T(order)  # The integral is 1/m. for Q(x).
   elseif normalized == :N
-    for int_idx in 2:(order - 1)
-      pointsum!(mat, axis, int_idx, row_idx, order)
+    for int_idx in 1:interval_cnt
+      valueat!(mat, axis, int_idx, row_idx, :Left, 1, order)
     end
-    rhs = zeros(T, vcnt * order)
+    valueat!(mat, axis, interval_cnt, row_idx, :Right, 1, order)
+    rhs = zeros(T, interval_cnt * order)
     rhs[end] = one(T)   # The sum is 1 for N(x).
   else
     error("Normalization not recognized")
   end
   @assert row_idx == size(mat, 1)
+  print("bspline_by_matrix! construction ")
+  display("text/plain", mat)
   x = mat \ rhs
-  for interval_idx in 1:vcnt
+  for interval_idx in 1:interval_cnt
     for kidx in 1:order
       coeffs[kidx, interval_idx] = x[(interval_idx - 1) * order + kidx]
     end
@@ -148,33 +155,16 @@ function bspline_by_matrix!(
 end
 
 
-# Use rationals so that we can compare with theoretical calculations easily.
-T = Rational{Int64}
-deg = 2  # degree of polynomial.
-ord = deg + 1  # order of polynomial.
-axis = collect(zero(T):T(ord))
-coeffs = zeros(T, ord, ord)
-multiplicity = ones(Int, ord)
-bspline_by_matrix!(axis, coeffs, multiplicity, ord, :N)
+# Given an axis of any length, this returns the ith subset of points on the axis
+# that are a support to a b-spline of given order.
+function reduce_axis(multiplicity::AbstractVector, order, i)
+  cumulative = cumsum(multiplicity)
+  left_index = searchsortedfirst(cumulative, i)
+  right_index = searchsortedfirst(cumulative, i + order)
+  multiplicityprime = copy(multiplicity[left_index:right_index])
 
-T = Rational{Int64}
-deg = 2  # degree of polynomial.
-ord = deg + 1  # order of polynomial.
-axis = collect(zero(T):(T(ord) - 1))
-coeffs = zeros(T, ord, ord - 1)
-multiplicity = ones(Int, ord - 1)
-multiplicity[2] = 2
-bspline_by_matrix!(axis, coeffs, multiplicity, ord, :N)
+  multiplicityprime[1] = cumulative[left_index] - i + 1
+  multiplicityprime[end] -= sum(multiplicityprime) - (order + 1)
 
-coeffs
-# We can compare that with Wikipedia's order 3 cardinal B-spline using symbolic math.
-using Symbolics
-@variables x
-# First equation clearly matches.
-sum(coeffs[1:3] .* [1, x, x^2])
-# Second equation, if we apply the horner shift and expand it, matches.
-simplify(sum(coeffs[4:6] .* [1, (x-1), (x-1)^2]), expand=true)
-simplify((-2x^2+6x-3)/2, expand = true)
-# So does third equation.
-simplify(sum(coeffs[7:9] .* [1, (x-2), (x-2)^2]), expand=true)
-simplify((3-x)^2/2, expand = true)
+  ((left_index, right_index), multiplicityprime)
+end

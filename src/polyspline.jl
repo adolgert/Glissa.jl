@@ -16,14 +16,17 @@ It should be the case that one(T) * one(X) is of type T.
 This can be a spline of another order. It's just a matter of the dimensions
 of the coefficient array, `c`.
 """
-mutable struct PolynomialSpline{X,T}
+abstract type PolynomialSpline{X,T} end
+
+struct PolySpline{X,T} <: PolynomialSpline{X,T}
     τ::AbstractVector{X}  # The abcissa
     c::AbstractMatrix{T}
 end
 
 order(ps::PolynomialSpline) = size(ps.c, 1)
 degree(ps::PolynomialSpline) = order(ps) - 1
-length(ps::PolynomialSpline) = length(ps.τ)
+Base.length(ps::PolynomialSpline) = length(ps.τ)
+Base.eltype(ps::PolynomialSpline{X,T}) where {X,T} = T
 
 
 """
@@ -118,7 +121,7 @@ function derivative(cs::PolynomialSpline{X,T}) where {X,T}
             c2[d, i] = T(d) * cs.c[d + 1, i]
         end
     end
-    PolynomialSpline{X,T}(cs.τ, c2)
+    PolySpline{X,T}(cs.τ, c2)
 end
 
 
@@ -137,6 +140,6 @@ function Base.:*(cs1::PolynomialSpline{X,T}, cs2::PolynomialSpline{X,T}) where {
             end
         end
     end
-    PolynomialSpline{X, T}(cs1.τ, c3)
+    PolySpline{X, T}(cs1.τ, c3)
 end
 
