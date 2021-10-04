@@ -12,11 +12,11 @@
 
 # A product from a to b.
 function dprod(a, b)
-  x::typeof(a*b) = 1
-  for i::typeof(a*b) = a:b
-    x *= i
-  end
-  return x
+    x::typeof(a * b) = 1
+    for i::typeof(a * b) = a:b
+        x *= i
+    end
+    return x
 end
 
 # Places values in the matrix, at the given row, that mean the value of this polynomial
@@ -24,15 +24,15 @@ end
 function valueat!(mat::AbstractArray{T}, axis, interval, row, side, scale, order) where {T}
   # This if-then is because equations are in Horner form (x-x_0) wher x_0 is the left side
   # of the interval in which this polynomial is defined.
-  x = if side == :Left
-      zero(T)
-  else
-    axis[interval + 1] - axis[interval]
-  end
-  for i in 1:order
-    col = i + (interval - 1) * order
-    mat[row, col] += x^(i - 1) * scale
-  end
+    x = if side == :Left
+        zero(T)
+    else
+        axis[interval + 1] - axis[interval]
+    end
+    for i in 1:order
+        col = i + (interval - 1) * order
+        mat[row, col] += x^(i - 1) * scale
+    end
 end
 
 # j is derivative, so first derivative is j=1.
@@ -41,38 +41,38 @@ end
 # side is whether this is the left or right side of the interval.
 # scale multiplies values, so we can add or subtract, to form equations.
 function derivat!(mat::AbstractArray{T}, axis, j, interval, row, side, scale, order) where {T}
-  if j == 0
-    valueat!(mat, axis, interval, row, side, scale, order)
+    if j == 0
+        valueat!(mat, axis, interval, row, side, scale, order)
+        return nothing
+    end
+    x = if side == :Left
+        zero(T)
+    else
+        axis[interval + 1] - axis[interval]
+    end
+    for i in (1 + j):order  # This drops terms b/c of the derivative.
+        col = i + (interval - 1) * order
+        mat[row, col] += dprod(i - j, i - 1) * x^(i - j - 1) * scale
+    end
     return nothing
-  end
-  x = if side == :Left
-    zero(T)
-  else
-    axis[interval + 1] - axis[interval]
-  end
-  for i in (1 + j):order  # This drops terms b/c of the derivative.
-    col = i + (interval - 1) * order
-    mat[row, col] += dprod(i-j, i-1) * x^(i - j - 1) * scale
-  end
-  return nothing
 end
 
 # Q(x) is normalized so that its integral is 1 / order
 function integralat!(mat::AbstractArray{T}, axis, interval, row, order) where {T}
   # println("$(length(axis)) $interval")
-  for i in 1:order
-    col = i + (interval - 1) * order
-    mat[row, col] += (axis[interval + 1]- axis[interval])^i / i
-  end
-  return nothing
+    for i in 1:order
+        col = i + (interval - 1) * order
+        mat[row, col] += (axis[interval + 1] - axis[interval])^i / i
+    end
+    return nothing
 end
 
 
 # N(x) is normalized so that the sum over the internal axis points is 1.
 function pointsum!(mat::AbstractArray{T}, axis, interval, row, order) where {T}
-  col = 1 + (interval - 1) * order
-  mat[row, col] += 1
-  return nothing
+    col = 1 + (interval - 1) * order
+    mat[row, col] += 1
+    return nothing
 end
 
 
@@ -89,82 +89,78 @@ function bspline_by_matrix!(
   order, normalized
   ) where {T}
 
-  degree = order - 1
-  multiples = sum(multiplicity .- 1)
-  interval_cnt = order - multiples  # The number of intervals.
-  @assert interval_cnt == length(axis) - 1
-  @assert order == length(axis) - 1 + multiples
-  @assert length(axis) == length(multiplicity)
-  @assert length(axis) == size(coeffs, 2)
-  mat = zeros(T, interval_cnt * order, interval_cnt * order)
-  coeffs .= zero(T)
+    degree = order - 1
+    multiples = sum(multiplicity .- 1)
+    interval_cnt = order - multiples  # The number of intervals.
+    @assert interval_cnt == length(axis) - 1
+    @assert order == length(axis) - 1 + multiples
+    @assert length(axis) == length(multiplicity)
+    @assert length(axis) == size(coeffs, 2)
+    mat = zeros(T, interval_cnt * order, interval_cnt * order)
+    coeffs .= zero(T)
 
   # At the left-hand side
-  row_idx = 1
-  for deridx in 0:(degree - multiplicity[1])
+    row_idx = 1
+    for deridx in 0:(degree - multiplicity[1])
     # Left side of first interval.
-    derivat!(mat, axis, deridx, 1, row_idx, :Left, 1, order)
-    row_idx += 1
-  end
+        derivat!(mat, axis, deridx, 1, row_idx, :Left, 1, order)
+        row_idx += 1
+    end
 
   # Internal nodes
-  for k in 1:(interval_cnt - 1)
+    for k in 1:(interval_cnt - 1)
     # At each join, the derivatives match.
     # k + 1 because it's multiplicity of the vertex, which is 1 + interval index.
-    for deridx in 0:(degree - multiplicity[k + 1])
+        for deridx in 0:(degree - multiplicity[k + 1])
       # Here, k is the index of the interval.
-      derivat!(mat, axis, deridx, k, row_idx, :Right, -1, order)
-      derivat!(mat, axis, deridx, k + 1, row_idx, :Left, 1, order)
-      row_idx += 1
+            derivat!(mat, axis, deridx, k, row_idx, :Right, -1, order)
+            derivat!(mat, axis, deridx, k + 1, row_idx, :Left, 1, order)
+            row_idx += 1
+        end
     end
-  end
 
   # At the right-hand side
-  for deridx in 0:(degree - multiplicity[interval_cnt + 1])
+    for deridx in 0:(degree - multiplicity[interval_cnt + 1])
     # Right side of last interval.
-    derivat!(mat, axis, deridx, interval_cnt, row_idx, :Right, 1, order)
-    row_idx += 1
-  end
+        derivat!(mat, axis, deridx, interval_cnt, row_idx, :Right, 1, order)
+        row_idx += 1
+    end
 
-  if normalized == :Q
     # The last constraint is that the integral over the b-spline is one.
     for int_idx in 1:interval_cnt
-      integralat!(mat, axis, int_idx, row_idx, order)
+        integralat!(mat, axis, int_idx, row_idx, order)
     end
     rhs = zeros(T, interval_cnt * order)
-    rhs[end] = one(T) / T(order)  # The integral is 1/m. for Q(x).
-  elseif normalized == :N
-    for int_idx in 1:interval_cnt
-      valueat!(mat, axis, int_idx, row_idx, :Left, 1, order)
+    if normalized == :Q
+        rhs[end] = one(T) / T(order)  # The integral is 1/m. for Q(x).
+    elseif normalized == :N
+        # Normalization is (y_m - y_1) / m.
+        rhs[end] = (axis[end] - axis[1]) / T(order)
+    else
+      error("Normalization not recognized")
     end
-    valueat!(mat, axis, interval_cnt, row_idx, :Right, 1, order)
-    rhs = zeros(T, interval_cnt * order)
-    rhs[end] = one(T)   # The sum is 1 for N(x).
-  else
-    error("Normalization not recognized")
-  end
-  @assert row_idx == size(mat, 1)
-  print("bspline_by_matrix! construction ")
-  display("text/plain", mat)
-  x = mat \ rhs
-  for interval_idx in 1:interval_cnt
-    for kidx in 1:order
-      coeffs[kidx, interval_idx] = x[(interval_idx - 1) * order + kidx]
+    @assert row_idx == size(mat, 1)
+    print("bspline_by_matrix! construction ")
+    display("text/plain", mat)
+    x = mat \ rhs
+    for interval_idx in 1:interval_cnt
+        for kidx in 1:order
+            coeffs[kidx, interval_idx] = x[(interval_idx - 1) * order + kidx]
+        end
     end
-  end
 end
 
 
 # Given an axis of any length, this returns the ith subset of points on the axis
 # that are a support to a b-spline of given order.
 function reduce_axis(multiplicity::AbstractVector, order, i)
-  cumulative = cumsum(multiplicity)
-  left_index = searchsortedfirst(cumulative, i)
-  right_index = searchsortedfirst(cumulative, i + order)
-  multiplicityprime = copy(multiplicity[left_index:right_index])
+    cumulative = cumsum(multiplicity)
+    left_index = searchsortedfirst(cumulative, i)
+    right_index = searchsortedfirst(cumulative, i + order)
+    multiplicityprime = copy(multiplicity[left_index:right_index])
 
-  multiplicityprime[1] = cumulative[left_index] - i + 1
-  multiplicityprime[end] -= sum(multiplicityprime) - (order + 1)
+    multiplicityprime[1] = cumulative[left_index] - i + 1
+    multiplicityprime[end] -= sum(multiplicityprime) - (order + 1)
 
-  ((left_index, right_index), multiplicityprime)
+    ((left_index, right_index), multiplicityprime)
 end

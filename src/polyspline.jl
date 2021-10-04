@@ -50,7 +50,7 @@ end
 
 function (cs::PolynomialSpline)(x::A) where {A <: Real}
     # Index of first greater-than-or-equal-to x.
-    i = Sort.searchsortedfirst(cs.τ, x) - 1
+    i = Sort.searchsortedlast(cs.τ, x)
     # For points off the sides, use the closest polynomial.
     i = max(min(length(cs.τ) - 1, i), 1)
     horner_in_interval(cs, i, x)

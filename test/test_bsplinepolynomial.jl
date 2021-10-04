@@ -34,7 +34,6 @@ for i in 1:10000
 end
 
 
-# It's a polynomial spline, but we want to remember where it sits on a larger axis.
 struct PolyBSpline{X,T} <: PolynomialSpline{X,T}
   τ::AbstractVector{X}  # The abcissa
   c::AbstractMatrix{T}
@@ -45,12 +44,13 @@ function evaluate(totalaxis::AbstractVector, bsplines::AbstractVector, x)
   i = searchsortedlast(totalaxis, x)
   total::eltype(bsplines[1]) = 0
   for j in 1:length(bsplines)
-    if i in bsplines[j].bounds
+    if i ≥ bsplines[j].bounds.start && i < bsplines[j].bounds.stop
       total += bsplines[j](x)
     end
   end
   total
 end
+
 
 
 # This tests solution of the constituent equations along an axis.
@@ -90,7 +90,7 @@ for i in 1:5
   for check_idx in 1:100
     x = rand(rng, Uniform(a, b))
     y = evaluate(axis, splines, x)
-    print("y $y ")
+    @test y ≈ 1.0
   end
 end
 
