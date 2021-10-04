@@ -95,7 +95,8 @@ function bspline_by_matrix!(
     @assert interval_cnt == length(axis) - 1
     @assert order == length(axis) - 1 + multiples
     @assert length(axis) == length(multiplicity)
-    @assert length(axis) == size(coeffs, 2)
+    @assert order == size(coeffs, 1)
+    @assert interval_cnt == size(coeffs, 2)
     mat = zeros(T, interval_cnt * order, interval_cnt * order)
     coeffs .= zero(T)
 
@@ -142,6 +143,7 @@ function bspline_by_matrix!(
     @assert row_idx == size(mat, 1)
     print("bspline_by_matrix! construction ")
     display("text/plain", mat)
+    println()
     x = mat \ rhs
     for interval_idx in 1:interval_cnt
         for kidx in 1:order
@@ -153,6 +155,7 @@ end
 
 # Given an axis of any length, this returns the ith subset of points on the axis
 # that are a support to a b-spline of given order.
+# multiplicity is an array of values between 1 and order.
 function reduce_axis(multiplicity::AbstractVector, order, i)
     cumulative = cumsum(multiplicity)
     left_index = searchsortedfirst(cumulative, i)

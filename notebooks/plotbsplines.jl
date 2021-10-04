@@ -77,3 +77,26 @@ for sidx in 1:length(splines)
 	end
 end
 plotsplines(splines, 2)
+
+
+T = Rational{Int64}
+deg = 2  # degree of polynomial.
+ord = deg + 1  # order of polynomial.
+axis = collect(zero(T):T(ord))
+coeffs = zeros(T, ord, ord)
+multiplicity = ones(Int, ord + 1)
+Glissa.bspline_by_matrix!(axis, coeffs, multiplicity, ord, :N)
+
+coeffs
+# We can compare that with Wikipedia's order 3 cardinal B-spline using symbolic math.
+Symbolics.@variables x
+# First equation clearly matches.
+@test simplify(sum(coeffs[1:3] .* [1, x, x^2]) == x^2 / 2) == true
+# Second equation, if we apply the horner shift and expand it, matches.
+c = simplify(sum(coeffs[4:6] .* [1, (x-1), (x-1)^2]), expand=true)
+d = simplify((-2x^2+6x-3)/2, expand = true)
+@test simplify(c == d) == true
+# So does third equation.
+a = simplify(sum(coeffs[7:9] .* [1, (x-2), (x-2)^2]), expand=true)
+b = simplify((3-x)^2/2, expand = true)
+@test simplify(a == b) == true

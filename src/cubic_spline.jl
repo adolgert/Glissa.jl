@@ -208,5 +208,5 @@ function cubic_spline(
     project_slope!(slope, τ, f, s)
     c = zeros(T, 4, N)
     cubic_spline_coefficients!(τ, f, s, c)
-    PolynomialSpline{X,T}(τ, c)
+    PolySpline{X,T}(τ, c)
 end

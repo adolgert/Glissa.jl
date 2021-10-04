@@ -4,8 +4,10 @@ authors = ["Andrew Dolgert <adolgert@uw.edu>"]
 version = "0.1.0"
 
 [deps]
+Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 Revise = "295af30f-e4ad-537b-8983-00126c2a3abe"
+Symbolics = "0c5d862f-8b57-4792-8d23-62f2024744c7"
 TestEnv = "1e6cf692-eddd-4d53-88a5-2d735e33781b"
 
 [compat]
@@ -20,7 +22,8 @@ RCall = "6f49c342-dc21-5d91-9882-a32aef131414"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 ReverseDiff = "37e2e3b7-166d-5795-8a7a-e32c996b4267"
 SafeTestsets = "1bc83da4-3b8d-516f-aca4-4fe02f6d838f"
+Symbolics = "0c5d862f-8b57-4792-8d23-62f2024744c7"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["DataFrames", "Distributions", "ForwardDiff", "GLM", "Random", "RCall", "ReverseDiff", "Test"]
+test = ["DataFrames", "Distributions", "ForwardDiff", "GLM", "Random", "RCall", "ReverseDiff", "Symbolics", "Test"]
