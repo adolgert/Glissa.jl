@@ -40,20 +40,22 @@ end
 
 
 # Algorithm 5.5: Given x in [y_l, y_l+1) to generate N^m_{l+1-m}(x) to N_l^m(x).
-# y is the axis. m is the order of the b-spline.
+# y is the axis. m is the order of the b-spline. The $l$ is found by a search of the axis,
+# and the axis can have repeated elements. This algorithm applies to axis intervals where
+# $y_{l+1} > y_l$, not equal to it. That tells us how to number the expansion coefficients, $c$.
 function generate_normalized_bsplines!(
-    N::AbstractVector{T}, y::AbstractVector{T}, l, m, x) where {T}
+    N::AbstractVector{T}, y::AbstractVector, l, m, x::T) where {T}
     @assert length(N) == m + 1
     @assert length(y) > l
 
-    Q = N
-    Q[m] = (y[l + 1] > y[l]) ? 1 / (y[l + 1] - y[l]) : 0
-    Q[m + 1] = 0
+    Q = N  # Use the incoming storage as a buffer in which to calculate Q.
+    Q[m] = (y[l + 1] > y[l]) ? one(T) / (y[l + 1] - y[l]) : zero(T)
+    Q[m + 1] = zero(T)
     for j in 2:(m - 1)
         for i in (m - j + 1):m
             denom = y[i + l - m + j] - y[i + l - m]
-            a1 = (denom > 0) ? (x - y[i + l - m]) / denom : 0
-            a2 = 1 - a1
+            a1 = (denom > 0) ? (x - y[i + l - m]) / denom : zero(T)
+            a2 = one(T) - a1
             Q[i] = a1 * Q[i] + a2 * Q[i + 1]
         end
     end
@@ -67,20 +69,22 @@ end
 
 # Algorithm 5.6: Evaluation of s(x) for Given a ≤ x < b.
 # c are the expansion coefficients. m is the degrees of freedom, order + K.
-function evaluate_bspline56(c, y, m, x)
+# The expansion coefficients are numbered such that the first interval is 1-order.
+# The next interval is 2-order, the next 3-order.
+function evaluate_bspline56(c::AbstractArray{T}, y::AbstractArray, m, x::T) where {T}
     l = searchsortedlast(y, x)
     N = zeros(T, m + 1)
     generate_normalized_bsplines!(N, y, l, m, x)
-    x::T = 0
+    x = zero(T)
     for i = 1:m
-        x += c[i] * N[i]
+        x += c[i + l - m] * N[i]
     end
     x
 end
 
 
 # Algorithm 5.8: Evaluate B-spline expansion at s Given x in [a,b]
-function evaluate_bspline(c, y, m, x)
+function evaluate_bspline(c::AbstractArray{T}, y::AbstractArray, m, x::T) where {T}
     l = searchsortedlast(y, x)
     cx = similar(c)
     for init in 1:m
@@ -89,8 +93,8 @@ function evaluate_bspline(c, y, m, x)
     for j in 2:m
         for i in m:-1:j
             denom = y[i + l - j + 1] - y[i + l - m]
-            a1 = (x - y[i + l - m]) / denom
-            a2 = 1 - a1
+            a1 = (denom > 0) ? (x - y[i + l - m]) / denom : zero(T)
+            a2 = one(T) - a1
             cx[i] = a1 * cx[i] + a2 * cx[i - 1]
         end
     end
