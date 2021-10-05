@@ -133,7 +133,7 @@ end
       splines[i] = PolyBSpline{T,T}(axis[l:r], coeffs, UnitRange{Int}(l, r))
     end
 
-    for check_idx in 1:2
+    for check_idx in 1:5
       x = rand(rng, Uniform(a, b - 1e-6))
       y = evaluate(axis, splines, x)
       @test y ≈ 1.0

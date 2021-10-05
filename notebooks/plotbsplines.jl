@@ -52,7 +52,7 @@ b = 5
 splines = Vector{PolyBSpline{T,T}}(undef, sum(multiplicity) - order)
 for i in 1:(sum(multiplicity) - order)
 	((l, r), m) = Glissa.reduce_axis(multiplicity, order, i)
-	coeffs = zeros(T, order, r - l + 1)
+	coeffs = zeros(T, order, r - l)
 	println("$m")
 	Glissa.bspline_by_matrix!(axis[l:r], coeffs, m, order, :N)
 	splines[i] = PolyBSpline{T,T}(axis[l:r], coeffs, UnitRange{Int}(l, r))
@@ -77,26 +77,3 @@ for sidx in 1:length(splines)
 	end
 end
 plotsplines(splines, 2)
-
-
-T = Rational{Int64}
-deg = 2  # degree of polynomial.
-ord = deg + 1  # order of polynomial.
-axis = collect(zero(T):T(ord))
-coeffs = zeros(T, ord, ord)
-multiplicity = ones(Int, ord + 1)
-Glissa.bspline_by_matrix!(axis, coeffs, multiplicity, ord, :N)
-
-coeffs
-# We can compare that with Wikipedia's order 3 cardinal B-spline using symbolic math.
-Symbolics.@variables x
-# First equation clearly matches.
-@test simplify(sum(coeffs[1:3] .* [1, x, x^2]) == x^2 / 2) == true
-# Second equation, if we apply the horner shift and expand it, matches.
-c = simplify(sum(coeffs[4:6] .* [1, (x-1), (x-1)^2]), expand=true)
-d = simplify((-2x^2+6x-3)/2, expand = true)
-@test simplify(c == d) == true
-# So does third equation.
-a = simplify(sum(coeffs[7:9] .* [1, (x-2), (x-2)^2]), expand=true)
-b = simplify((3-x)^2/2, expand = true)
-@test simplify(a == b) == true

@@ -11,7 +11,7 @@ end
 
 # Algorithm 5.4 Given x in [y_p, y_q) and a guess for l,
 # find l such that y_l <= x < y_l + 1.
-function find_left_index(y::AbstractVector{T}, x::T, l::T) where {T}
+function find_left_index(y::AbstractVector{T}, x::T, l::Int) where {T}
     n = length(y)
     if l + 1 ≤ n && x ≥ y[l + 1]
         if l + 1 == n
@@ -42,24 +42,24 @@ end
 # Algorithm 5.5: Given x in [y_l, y_l+1) to generate N^m_{l+1-m}(x) to N_l^m(x).
 # y is the axis. m is the order of the b-spline.
 function generate_normalized_bsplines!(
-    Q::AbstractVector{T}, y::AbstractVector{T}, l, m, x) where {T}
-    @assert length(Q) == m + 1
-    @assert lengty(y) > l
+    N::AbstractVector{T}, y::AbstractVector{T}, l, m, x) where {T}
+    @assert length(N) == m + 1
+    @assert length(y) > l
 
-    Q = zeros(T, m + 1)
-    Q[m] = 1 / (y[l + 1] - y[l])
+    Q = N
+    Q[m] = (y[l + 1] > y[l]) ? 1 / (y[l + 1] - y[l]) : 0
     Q[m + 1] = 0
     for j in 2:(m - 1)
-        for i in (m - j):m
+        for i in (m - j + 1):m
             denom = y[i + l - m + j] - y[i + l - m]
-            a1 = (x - y[i + l - m]) / denom
+            a1 = (denom > 0) ? (x - y[i + l - m]) / denom : 0
             a2 = 1 - a1
             Q[i] = a1 * Q[i] + a2 * Q[i + 1]
         end
     end
     # This step converts b-splines Q into normalized b-splines N.
     for ii in 1:m
-        Q[ii] = (x - y[ii + l - m]) * Q[ii] + (y[ii + l] - x) * Q[ii + 1]
+        N[ii] = (x - y[ii + l - m]) * Q[ii] + (y[ii + l] - x) * Q[ii + 1]
     end
     return nothing
 end

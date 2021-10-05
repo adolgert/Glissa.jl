@@ -7,6 +7,7 @@ include("polyspline.jl")
 include("bsplinepolynomial.jl")
 include("bspline.jl")
 include("cubic_spline.jl")
+include("schumaker.jl")
 
 export PolynomialSpline
 export cubic_spline
