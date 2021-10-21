@@ -52,6 +52,7 @@ function generate_normalized_bsplines!(
     @assert length(y) > l
 
     Q = N  # Use the incoming storage as a buffer in which to calculate Q.
+    Q[1:(m-1)] .= zero(T)
     Q[m] = (y[l + 1] > y[l]) ? one(T) / (y[l + 1] - y[l]) : zero(T)
     Q[m + 1] = zero(T)
     for j in 2:(m - 1)
