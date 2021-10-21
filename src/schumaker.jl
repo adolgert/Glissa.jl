@@ -1,4 +1,7 @@
 # These algorithms are from Schumaker's book, Spline Functions: Basic Theory, 3rd ed.
+# They generate the values, derivatives, and integrals of B-splines
+# directly from an axis with its multiplicity. They don't create an intermediate
+# representation of the polynomial for the B-spline.
 
 # Algorithm 5.3 Bisection
 # Given that x lies in [y_p, y_q) (That's closed on the left, open on the right)

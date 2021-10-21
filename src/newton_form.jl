@@ -38,7 +38,9 @@ function (nf::NewtonForm{T})(x) where {T}
 end
 
 
-"""
+@doc raw"""
+Given an axis `τ` and values `f` on that axis, return a polynomial `y` such that
+``y(τ[i]) = f[i]``.
 Construct a polynomial that interpolates a function, using polynomials with zeroes.
 This should match the constructor above. It comes from deBoor equation 4.2.
 """

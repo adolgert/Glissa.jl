@@ -1,6 +1,12 @@
 # This notebook solves for B-splines of order 2 by constructing a matrix
 # of constraints and solving that matrix for coefficients of each part of the
-# polynomial.
+# polynomial. This will give you coefficients for any B-spline. If you want
+# to know coefficients for B-splines on an integer axis of a given order, then
+# run this with the Rational type, and it should agree with published examples.
+#
+# This isn't used, in practice, when working with B-splines, because you don't need
+# to represent them as polynomials. Instead, there are other functions that evaluate
+# the B-spline directly from the axis and smoothness conditions that define it.
 
 # What's a derivative? of sum(c_i x^(i-1), {i, 1, n})
 # c[1] x^0 + c[2] x^1 + c[3] x^2 + c[4] x^3   # sum(c_i x^(i-1), {i, 1, n}), n=4.
@@ -11,6 +17,7 @@
 #   sum(prod(k, {k,i-j, i-1}) x^(i-1-j)), {i,1-j,n})
 
 # A product from a to b.
+@doc raw"""``a(a+1)(a+2)\cdots(b-1)b``"""
 function dprod(a, b)
     x::typeof(a * b) = 1
     for i::typeof(a * b) = a:b
@@ -75,15 +82,16 @@ function pointsum!(mat::AbstractArray{T}, axis, interval, row, order) where {T}
     return nothing
 end
 
-
-# Calculate coefficients of a b-spline of order m, degree m-1
-# by sending an axis of length m+1 and a coefficient matrix of size mxm,
-# into which are written columns of coefficients for the polynomial of each interval.
-# If you want a b-spline on a subset of an axis, use an array view.
-# This is the least efficient way to calculate these coefficients, but it makes
-# explicit the continuity conditions that lead to a solution.
-# `i` is the index of the leftmost point, counting points by their multiplicity,
-# so a point with multiplicity of 3 is three points.
+@doc raw"""
+Calculate coefficients of a b-spline of order m, degree m-1
+by sending an axis of length m+1 and a coefficient matrix of size mxm,
+into which are written columns of coefficients for the polynomial of each interval.
+If you want a b-spline on a subset of an axis, use an array view for inputs.
+This is the least efficient way to calculate these coefficients, but it makes
+explicit the continuity conditions that lead to a solution.
+`i` is the index of the leftmost point, counting points by their multiplicity,
+so a point with multiplicity of 3 is three points.
+"""
 function bspline_by_matrix!(
   axis::AbstractArray{T}, coeffs::AbstractArray{T}, multiplicity::AbstractVector{Int},
   order, normalized
@@ -100,29 +108,29 @@ function bspline_by_matrix!(
     mat = zeros(T, interval_cnt * order, interval_cnt * order)
     coeffs .= zero(T)
 
-  # At the left-hand side
+    # At the left-hand side
     row_idx = 1
     for deridx in 0:(degree - multiplicity[1])
-    # Left side of first interval.
+        # Left side of first interval.
         derivat!(mat, axis, deridx, 1, row_idx, :Left, 1, order)
         row_idx += 1
     end
 
-  # Internal nodes
+    # Internal nodes
     for k in 1:(interval_cnt - 1)
-    # At each join, the derivatives match.
-    # k + 1 because it's multiplicity of the vertex, which is 1 + interval index.
+        # At each join, the derivatives match.
+        # k + 1 because it's multiplicity of the vertex, which is 1 + interval index.
         for deridx in 0:(degree - multiplicity[k + 1])
-      # Here, k is the index of the interval.
+            # Here, k is the index of the interval.
             derivat!(mat, axis, deridx, k, row_idx, :Right, -1, order)
             derivat!(mat, axis, deridx, k + 1, row_idx, :Left, 1, order)
             row_idx += 1
         end
     end
 
-  # At the right-hand side
+    # At the right-hand side
     for deridx in 0:(degree - multiplicity[interval_cnt + 1])
-    # Right side of last interval.
+        # Right side of last interval.
         derivat!(mat, axis, deridx, interval_cnt, row_idx, :Right, 1, order)
         row_idx += 1
     end
@@ -140,10 +148,12 @@ function bspline_by_matrix!(
     else
       error("Normalization not recognized")
     end
+    # The matrix must be square in order for it to have an inverse.
     @assert row_idx == size(mat, 1)
-    print("bspline_by_matrix! construction ")
-    display("text/plain", mat)
-    println()
+    # The matrix will be nonsingular iff it has a positive entry at every diagonal.
+    # print("bspline_by_matrix! construction ")
+    # display("text/plain", mat)
+    # println()
     x = mat \ rhs
     for interval_idx in 1:interval_cnt
         for kidx in 1:order
@@ -153,9 +163,13 @@ function bspline_by_matrix!(
 end
 
 
-# Given an axis of any length, this returns the ith subset of points on the axis
-# that are a support to a b-spline of given order.
-# multiplicity is an array of values between 1 and order.
+@doc raw"""
+This extracts from a multiplicity vector the support for the `i`th B-spline.
+There is an axis where `length(axis)=length(multiplicity)`. This axis will, in general,
+support multiple B-splines. This function returns a sub-range of that axis
+and a new multiplicity vector, the same length as that sub-range. It will be the exact
+support for the `i`th B-spline of order `order`.
+"""
 function reduce_axis(multiplicity::AbstractVector, order, i)
     cumulative = cumsum(multiplicity)
     left_index = searchsortedfirst(cumulative, i)

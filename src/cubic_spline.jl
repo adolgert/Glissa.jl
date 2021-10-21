@@ -1,3 +1,5 @@
+# This file is a traditional cubic splines interpolation, including
+# monotonic splines.
 using Base.Sort
 using LinearAlgebra
 
