@@ -23,7 +23,7 @@ end
 """The order is one plus the degree of the polynomial."""
 order(ps::PiecewisePolynomial) = size(ps.c, 1)
 
-"""Polynomial degree, so 2 for ``x^2``"""
+@doc raw"""Polynomial degree, so 2 for ``x^2``"""
 degree(ps::PiecewisePolynomial) = order(ps) - 1
 
 """Number of vertices in axis, which is 1 + number of intervals"""
@@ -33,7 +33,9 @@ Base.length(ps::PiecewisePolynomial) = length(ps.τ)
 Base.eltype(::PiecewisePolynomial{X,T}) where {X,T} = T
 
 
-"""Evaluate a piecewise polynomial at `x`."""
+# Difficult to add this document string with Documenter.jl.
+# Evaluate a piecewise polynomial at `x`.
+# """
 function (cs::PiecewisePolynomial)(x::A) where {A <: Real}
     # Index of first greater-than-or-equal-to x.
     i = Sort.searchsortedlast(cs.τ, x)
