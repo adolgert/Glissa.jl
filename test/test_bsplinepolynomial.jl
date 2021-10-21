@@ -37,7 +37,7 @@ using Test
   end
 end
 
-struct PolyBSpline{X,T} <: PolynomialSpline{X,T}
+struct PolyBSpline{X,T} <: PiecewisePolynomial{X,T}
   τ::AbstractVector{X}  # The abcissa
   c::AbstractMatrix{T}
   bounds::UnitRange{Int}

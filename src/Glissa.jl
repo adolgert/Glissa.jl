@@ -9,7 +9,7 @@ include("bspline.jl")
 include("cubic_spline.jl")
 include("schumaker.jl")
 
-export PolynomialSpline
+export PiecewisePolynomial
 export cubic_spline
 export evaluate!
 export FreeSlope

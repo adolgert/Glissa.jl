@@ -1,10 +1,5 @@
-"""
-A general spline solver, the hard way, without basis functions.
-Reading Chapter 4 on Polynomial Splines in Schumaker.
-"""
-
 @doc raw"""
-This is a polynomial spline. It has N+1 points on the abcissa, ``\tau``.
+This is a piecewise polynomial. It has N+1 points on the abcissa, ``\tau``.
 It has N cubic interpolants in `c`, which is size 4 x N for a cubic spline.
 At each interval, the polynomial is in Horner Form,
 
@@ -14,58 +9,38 @@ This spline has one type for the abcissa and one for the ordinate coefficients.
 It should be the case that one(T) * one(X) is of type T.
 
 This can be a spline of another order. It's just a matter of the dimensions
-of the coefficient array, `c`.
+of the coefficient array, `c`. You would evaluate this with
+`evalpoly(x-τ[i], c[1:end, i])`, where `i` is the interval.
 """
-abstract type PolynomialSpline{X,T} end
+abstract type PiecewisePolynomial{X,T} end
 
-struct PolySpline{X,T} <: PolynomialSpline{X,T}
+struct PolySpline{X,T} <: PiecewisePolynomial{X,T}
     τ::AbstractVector{X}  # The abcissa
     c::AbstractMatrix{T}
 end
 
-order(ps::PolynomialSpline) = size(ps.c, 1)
-degree(ps::PolynomialSpline) = order(ps) - 1
-Base.length(ps::PolynomialSpline) = length(ps.τ)
-Base.eltype(ps::PolynomialSpline{X,T}) where {X,T} = T
+order(ps::PiecewisePolynomial) = size(ps.c, 1)
+degree(ps::PiecewisePolynomial) = order(ps) - 1
+Base.length(ps::PiecewisePolynomial) = length(ps.τ)
+Base.eltype(::PiecewisePolynomial{X,T}) where {X,T} = T
 
 
-"""
-((cs.c[4, i] * Δ + cs.c[3, i]) * Δ + cs.c[2, i]) * Δ + cs.c[1, i]
-
-Use evalpoly and @evalpoly.
-"""
-function horner_in_interval(cs::PolynomialSpline{X,T}, i, x) where {X,T}
-    Δ = x - cs.τ[i]
-    m = size(cs.c, 1)
-    if m > 0
-        total = cs.c[m, i]
-        for d = (m - 1):-1:1
-            total *= Δ
-            total += cs.c[d, i]
-        end
-        total
-    else
-        zero(T)
-    end
-end
-
-
-function (cs::PolynomialSpline)(x::A) where {A <: Real}
+function (cs::PiecewisePolynomial)(x::A) where {A <: Real}
     # Index of first greater-than-or-equal-to x.
     i = Sort.searchsortedlast(cs.τ, x)
     # For points off the sides, use the closest polynomial.
     i = max(min(length(cs.τ) - 1, i), 1)
-    horner_in_interval(cs, i, x)
+    evalpoly(x - cs.τ[i], cs.c[1:end, i])
 end
 
 
-function evaluate!(cs::PolynomialSpline, x::AbstractVector, y::AbstractVector)
+function evaluate!(cs::PiecewisePolynomial, x::AbstractVector, y::AbstractVector)
     # Index of first greater-than-or-equal-to x.
     k = 1
     i = Sort.searchsortedfirst(cs.τ, x[k]) - 1
     i = max(min(length(cs.τ) - 1, i), 1)
     while k <= length(x)
-        y[k] = horner_in_interval(cs, i, x[k])
+        y[k] = evalpoly(x[k] - cs.τ[i], cs[i])
         k += 1
         while i + 1 < length(cs.τ) && cs.τ[i + 1] < x[k]
             i += 1
@@ -77,7 +52,7 @@ end
 Integrate a spline from a knot at `i` to the value `x`.
 # (((A(1/4)*cs.c[4, i] * Δ + A(1/3)*cs.c[3, i]) * Δ + A(1/2)*cs.c[2, i]) * Δ + cs.c[1, i])*Δ
 """
-function integral_in_interval(cs::PolynomialSpline{X,T}, i, x::A) where {A <: Real, X, T}
+function integral_in_interval(cs::PiecewisePolynomial{X,T}, i, x::A) where {A <: Real, X, T}
     Δ = x - cs.τ[i]
     m = size(cs.c, 1)
     if m > 0
@@ -96,7 +71,7 @@ end
 """
 Integrate a spline from `x1` to `x2`.
 """
-function integrate(cs::PolynomialSpline, x1::A, x2::A) where {A <: Real}
+function integrate(cs::PiecewisePolynomial, x1::A, x2::A) where {A <: Real}
     # Index of first greater-than-or-equal-to x.
     i = Sort.searchsortedfirst(cs.τ, x1) - 1
     # For points off the sides, use the closest polynomial.
@@ -115,7 +90,7 @@ end
 """
 Given a spline, create a new spline that is its derivative.
 """
-function derivative(cs::PolynomialSpline{X,T}) where {X,T}
+function derivative(cs::PiecewisePolynomial{X,T}) where {X,T}
     m = size(cs.c, 1)
     c2 = similar(cs.c[2:m, :])
     for i = 1:size(cs.c, 2)
@@ -131,7 +106,7 @@ end
 Multiply two splines of order `m1` and `m2` to get a spline of order `m1+m2`.
 This only works if the two splines have the same abcissa.
 """
-function Base.:*(cs1::PolynomialSpline{X,T}, cs2::PolynomialSpline{X,T}) where {X,T}
+function Base.:*(cs1::PiecewisePolynomial{X,T}, cs2::PiecewisePolynomial{X,T}) where {X,T}
     m1 = size(cs1.c, 1)
     m2 = size(cs2.c, 1)
     c3 = zeros(T, m1 + m2 - 1, size(cs1.c, 2))
