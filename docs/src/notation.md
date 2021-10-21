@@ -1,77 +1,46 @@
 # Notation
 
-This package works with polynomials. It will work from traditional polynomial sources, and the notation isn't great. This document will work through what notation to use and how to label variables in the code.
+This defines terms in order to help read the code.
 
-* How to represent points that implicitly extend to either side of the axis. Schumaker talks about an expansion, $y_i$ of the $x_i$. This has been confusing to read.
+## Polynomial
 
-* What to call each interval - polynomial pieces is simple.
+A **polynomial** is a function of $x$, with constants $c_i$, of the form
 
-* How to deal with coincident knots. Some algorithms assume consecutive knots can be equal, while others assign a multiplicity to knots. Relying on floating-point equality is a bad idea, so I'd like to use multiplicity.
+$c_1 + c_2 (x - x_1) + c_3 (x - x_1)^2$
 
-* There is the order, $m$ and degree $d$. The degree is a number people see when they write out the polynomial, so let's prefer the degree and call it $d$.
+The polynomial above has a **degree** of $d=2$ because $(x-x_1)^2$ is the largest power. It has **order** $m=3$ because there are 3 constants $(c_1, c_2, c_3)$. In Julia, you can evaluate a polynomial with [`evalpoly`](https://docs.julialang.org/en/v1/base/math/#Base.Math.evalpoly).
 
-The code will need to walk through axis points, taking steps through points that have multiplicity. We can make an inner loop from 1 to m[i] for each point. I think that will work. If we need an index on the virtual points, then that can use an `i+=1` scheme.
+```julia
+x = 5.5
+x1 = 5.0
+c = rand(3)
+y = evalpoly(3, c)
+```
 
-# What is a B-spline
+## Piecewise Polynomial
 
-## Polynomial splines
+Separate the $x$-axis into $(x_1, x_2, x_3, x_4... x_{k+1})$ so that there are $k$ intervals, where **interval** $j$ is the axis between $x_j$ and $x_{j+1}$, not including the endpoint $x_{j+1}$. Now define a polynomial on each interval. Each of these is a **polynomial piece**. The $x$-values, excluding the endpoints, are called **knots.**
 
-Let's start with an axis on the real number line. Set a point $x_1$. A second-degree polynomial is
+We need two indices on the constants, so they are now $c_{ij}$, where the row is the polynomial constant and the column is the polynomial piece. In addition, we assume all polynomial pieces have the same degree.
 
-$c_1 + c_2 (x - x_1) + c_3 (x - x_1)^2.$
+## Polynomial Spline
 
-This is also called an order 3 polynomial because it has 3 terms. Spline literature likes to specify the order instead of the degree.
+The piecewise polynomial above makes no guarantees that neighboring intervals will be continuous. If the value of the polynomial in one interval is continuous with the value of the neighboring polynomial, it's called $C^0$ smooth. If, in addition to being continuous, the first derivatives match, then it's $C^1$ smooth. For matching second derivatives, that's $C^2$ smooth.
 
-If we divide the axis into pieces between some $x_1$ and $x_n$, we get $x_1 < x_2 < x_3 \cdots < x_n$. We can define a separate polynomial piece on each interval. For example, the second piece is a polynomial to the right of $x_2$, $d_1 + d_2 (x - x_2) + d_3 (x - x_2)^2$. Each polynomial piece could be completely separate, not meeting at all. Let's discuss how two polynomials meet.
+A **polynomial spline with simple knots** is a piecewise polynomial, of degree $d$, which is $C^{d-1}$ smooth at each knot. It couldn't be any more smooth, because if we say, for instance, that two second-degree polynomials have the same values and derivatives, all the way up to second derivatives, then they are the same polynomial because they have to have the same polynomial constants.
 
-If the polynomials are continuous across $x_2$ --- the $x$-values where the axis has breaks are called "knots" --- then the two polynomials are related by an equation.
+A general **polynomial spline** guarantees that you don't have a situation where the derivatives agree across a knot, but the values aren't continuous. That may seem weird, but it's useful for some kinds of integration. Because of this restriction, we can think of each knot as having its own continuity condition. For instance, for a quadratic spline, each knot could be $C^0$ or $C^1$. For a quadratic spline, each knot could be $C^0$, $C^1$, $C^2$, or $C^3$.
 
-$c_1 + c_2 (x_2 - x_1) + c_3 (x_2 - x_1)^2 = d_1 + d_2 (x_2 - x_2) + d_3 (x_2 - x_2)^2 = d_1$
+The **multiplicity** of a knot indicates its smoothness. For a degree $d$ polynomial, a multiplicity $m_j=1$ know has maximal smoothness, which is $C^{d-1}$. As multiplicity increases, smoothness across the knot decreases. The maximum multiplicity is $m_j=m$, where $m=d+1$ is the order of the polynomial. When $j_j=m$, then the two neighboring polynomial pieces are disconnected. Note that endpoints aren't knots, just places where intervals meet. In code, an array `m[i]` is a multiplicity vector, but an integer `m` is the order.
 
-If the polynomials have the same derivative at $x_2$, then this equation holds.
+There is another way to represent knot multiplicity. When listing the knots, repeat values for the knots of higher multiplicity, so $(x_1, x_1, x_1, x_2, x_2, x_3, x_3 x_4, x_4, x_4)$. Some algorithms rely on neighboring knots sometimes being equal.
 
-$c_2 + 2c_3 (x_2 - x_1) = d_2 + 2d_3 (x_2 - x_2)$
-
-If we try to require that the second derivative of a second-degree polynomial matches at $x_2$, then we see that, by this point, the two polynomials have to be the same.
-
-$c_3 = d_3$
-
-That means that a polynomial spline is constructed from pieces which can have no continuity or contiuous derivatives up to a jth derivative, where $j$ is less than the degree. Sometimes we call continuity a 0th derivative continuity.
-
-We're left with polynomial pieces where, at each knot, there is a specified continuity.
-
-## What B-splines are for
-
-Construct a polynomial spline from B-splines. The B-splines are a basis set for polynomial splines. If you had 100 pieces to an interval and wanted to define degree 3 splines, you would need to store 400 polynomial coefficients. But if you use B-splines, you only need to store 103 B-spline coefficients. And, what's more, if you had predetermined that the polynomial spline would have certain continuity conditions between pieces, you'd have to ensure the polynomial coefficients retained that continuity as the values changed, but the B-splines have continuity conditions baked into their selection, so that any set of B-spline coefficients always defines a polynomial spline of the desired continuity.
-
-So we're going to take the degree of the spline as a given, and we're going to take the internal continuity conditions as a given.
+There is some sense to using the word, multiplicity, to denote smoothness of splines. If three neighboring intervals are $C^2$ smooth, and you drag the knots together, shrinking the middle interval, the resulting neighboring intervals will only be $C^1$ smooth. Overlapping knots are equivalent to reduced continuity.
 
 ## Boundary conditions
 
-At the left-most knot and the right-most knot, we can define boundary conditions. A boundary condition is a specific value for the $j$-th derivative of the polynomial at that boundary. We will discuss so-called natural boundary conditions, meaning that we require the polynomial value to be 0 at the boundary, or its value and first derivative both to be 0, or its value and first two derivatives to be 0, and so on.
+At the left-most $x_1$ and the right-most $x_{k+1}$, we can define boundary conditions. A **boundary condition** is a specific value for the $j$-th derivative of the polynomial at that boundary. We will discuss so-called natural boundary conditions, meaning that we require the polynomial value to be 0 at the boundary, or its value and first derivative both to be 0, or its value and first two derivatives to be 0, and so on.
 
-## B-spline definition
+For a degree $d=2$ polynomial, we can require the value to be zero and the first derivative to be zero. That's up to 2 boundary conditions. If we required more, it would set the polynomial to be zero within the interval neighboring the boundary.
 
-Given an axis with knots, $x_1 < x_2 < x_3 \cdots < x_n$, every polynomial spline that is uniquely-defined by its continuity and natural boundary conditions is a B-spline. If we make a list of the B-splines, then we can guarantee that any polynomial spine with the same continuity can be described by a sum of B-splines. The B-splines form a basis set for polynomial splines.
-
-A polynomial spline that has no specified internal values is uniquely-defined when the continuity and boundary conditions, together, are enough to specify the constants, $c_1$, $c_2$, of its polynomial pieces. We figure out what these are by playing a game where we a) count the unknowns and b) count the equations that constrain their unknowns. These must be equal in order to define a B-spline.
-
-If the B-spline has degree $d$, then each polynomial piece has $d+1$ unknowns. There will be $p$ polynomial pieces, defined by $p+1$ knots on the axis. The total number of unknowns is therefore $(d+1)p$.
-
-Start with internal continuity. Each continuity level is another constraint. Let's limit ourselves to B-splines that have the same continuity at every internal knot. Where there is maximal continuity, so up-to-the $j$th derivative matches for degree $d=j+1$, we'll call that $m=1$. And when $m=d + 1$, that's no continuity between polynomial pieces. For $p$ pieces, there are $p-1$ places those pieces join internally, which adds $(p-1)(d + 1 - m)$ equations to our constraints.
-
-So far, the score is that there are $(d+1)p$ unknowns and $(p-1)(d + 1 - m)$ constraints, which leaves $d+1+mp-m$ missing constraints, and we get them from two places. One is that there needs to be an overall scaling factor for this polynomial, something to determine its total area. For $Q$ splines, that total area is set at $1/(d+1)$. For normalized splines, that total area is set at $(x_l-x_1)/(d+1)$. We'll see those choices work out nicely. That leaves $d+mp-m$ constraints, which we set as boundary conditions.
-
-There are up to $d$ boundary conditions on each side of the polynomial splines (for degree 2, that's zeroth and first derivatives), so we can define a B-spline as long as
-
-$d + m(p-1) \le 2d.$
-
-As long as that holds, there is some combination of natural boundary conditions that will define a B-spline. If we shift those variables around, we get $m(p-1) \le d$. The most-smooth spline has $m=1$ because it has the most continuity at internal knots, so that $p=d+1$. That means this kind of spline has three polynomial pieces for a second-degree spline and four polynomial pieces for a third-degree spline.
-
-## Use as a basis
-
-For a given spline degree and specified internal continuity, including all b-splines on an axis, including all allowed natural boundary conditions at the edges of the axis, gives a basis for polynomials of that degree and internal continuity.
-
-## Finding B-splines
-
-Using a matrix of equations. Using the magical functions.
+A boundary condition at $x_1$ or $x_{k+1}$ is kind of like a continuity condition with some polynomial piece that's outside the axis of the polynomial spline. Because of this similarity, we can represent boundary conditions by 1) defining values for a neighboring polynomial on each side and 2) assigning a multiplicity to the endpoints the same way we assign multiplicity to the knots. In this case, a multiplicity of 1 means that, at the endpoint, the polynomial piece is $C^{d-1}$ continuous with the polynomial outside. A multiplicity of $d+1$ means there is no continuity, so there are no boundary conditions at that endpoint.

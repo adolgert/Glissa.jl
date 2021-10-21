@@ -15,6 +15,9 @@ makedocs(;
     ),
     pages=[
         "Home" => "index.md",
+        "Overview" => "overview.md",
+        "Notation" => "notation.md",
+        "B-splines" => "bsplines.md"
     ],
 )
 

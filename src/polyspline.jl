@@ -31,6 +31,8 @@ Base.eltype(ps::PolynomialSpline{X,T}) where {X,T} = T
 
 """
 ((cs.c[4, i] * Δ + cs.c[3, i]) * Δ + cs.c[2, i]) * Δ + cs.c[1, i]
+
+Use evalpoly and @evalpoly.
 """
 function horner_in_interval(cs::PolynomialSpline{X,T}, i, x) where {X,T}
     Δ = x - cs.τ[i]
