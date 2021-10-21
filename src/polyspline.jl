@@ -14,33 +14,42 @@ of the coefficient array, `c`. You would evaluate this with
 """
 abstract type PiecewisePolynomial{X,T} end
 
+
 struct PolySpline{X,T} <: PiecewisePolynomial{X,T}
     τ::AbstractVector{X}  # The abcissa
     c::AbstractMatrix{T}
 end
 
+"""The order is one plus the degree of the polynomial."""
 order(ps::PiecewisePolynomial) = size(ps.c, 1)
+
+"""Polynomial degree, so 2 for ``x^2``"""
 degree(ps::PiecewisePolynomial) = order(ps) - 1
+
+"""Number of vertices in axis, which is 1 + number of intervals"""
 Base.length(ps::PiecewisePolynomial) = length(ps.τ)
+
+"""Type of the polynomial constants."""
 Base.eltype(::PiecewisePolynomial{X,T}) where {X,T} = T
 
 
+"""Evaluate a piecewise polynomial at `x`."""
 function (cs::PiecewisePolynomial)(x::A) where {A <: Real}
     # Index of first greater-than-or-equal-to x.
     i = Sort.searchsortedlast(cs.τ, x)
     # For points off the sides, use the closest polynomial.
     i = max(min(length(cs.τ) - 1, i), 1)
-    evalpoly(x - cs.τ[i], cs.c[1:end, i])
+    evalpoly(x - cs.τ[i], view(cs.c, :, i))
 end
 
-
+"""Evaluate a piecewise polynomial at a series of `x` values and write into `y`."""
 function evaluate!(cs::PiecewisePolynomial, x::AbstractVector, y::AbstractVector)
     # Index of first greater-than-or-equal-to x.
     k = 1
     i = Sort.searchsortedfirst(cs.τ, x[k]) - 1
     i = max(min(length(cs.τ) - 1, i), 1)
     while k <= length(x)
-        y[k] = evalpoly(x[k] - cs.τ[i], cs[i])
+        y[k] = evalpoly(x[k] - cs.τ[i], view(cs.c, :, i))
         k += 1
         while i + 1 < length(cs.τ) && cs.τ[i + 1] < x[k]
             i += 1
@@ -119,4 +128,3 @@ function Base.:*(cs1::PiecewisePolynomial{X,T}, cs2::PiecewisePolynomial{X,T}) w
     end
     PolySpline{X, T}(cs1.τ, c3)
 end
-
