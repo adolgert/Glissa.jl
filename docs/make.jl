@@ -17,7 +17,8 @@ makedocs(;
         "Home" => "index.md",
         "Overview" => "overview.md",
         "Notation" => "notation.md",
-        "B-splines" => "bsplines.md"
+        "B-splines" => "bsplines.md",
+        "Test Plan" => "testplan.md"
     ],
 )
 

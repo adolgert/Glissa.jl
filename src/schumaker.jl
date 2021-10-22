@@ -3,7 +3,7 @@
 # directly from an axis with its multiplicity. They don't create an intermediate
 # representation of the polynomial for the B-spline.
 
-# Algorithm 5.3 Bisection
+# Algorithm 5.3 5
 # Given that x lies in [y_p, y_q) (That's closed on the left, open on the right)
 # find l such that y_l <= x < y_{l+1}.
 # This can return 0 if x < y[1]
@@ -108,9 +108,9 @@ end
 
 # Algorithm 5.10. Calculation of expansion coefficient matrix for derivatives.
 # m is the order. c is the coefficient vector.
-function derivative_expansion_coefficients(c::AbstractVector{T}, m) where T
+# Initialize `cd=zeros(T, m, length(c))`.
+function derivative_expansion_coefficients!(cd, c::AbstractVector{T}, m) where T
     n = length(c)
-    cd = zeros(T, m, n)
     for init in 1:n
         cd[1, init] = c[init]
     end
@@ -125,7 +125,7 @@ function derivative_expansion_coefficients(c::AbstractVector{T}, m) where T
             end
         end
     end
-    cd
+    nothing
 end
 
 
@@ -138,4 +138,48 @@ function derivative_at(cd, m, d, x)
 end
 
 
-# Algorithm 5.12. Skipping for now. Computes all derivatives.
+# Algorithm 5.12. Compute all derivatives
+# Fill `s` with an array of all derivatives of the spline, starting from the 0th derivative.
+# `cd` - the derivatives matrix of the expansion coefficient.
+function all_derivatives!(s::AbstractVector, cd, m, x)
+    l = searchsortedlast(y, x)
+    s[m] = cd[m, l]
+    for d = 1:(m-1)
+        s[d] = evaluate_bspline(cd[d, :], y, m - d + 1, x)
+    end
+    nothing
+end
+
+
+@doc raw"""
+Algorithm 5.15: Construct a piecewise polynomial representation of a polynomial spline
+that is represented by spline coefficients. This converts out of B-splines to the polynomial
+representation. If there are more than about 2 evaluations of each spline interval, this
+can be more efficient.
+Each spline ``i`` is represented by a polynomial of the form
+
+``s_i(x)= \sum_{j=1}^m w_{ji} (x - \tau_i)^{j-1}``
+
+where ``w_{ij}`` are polynomial constants for the `i`th B-spline.
+
+Initialize `w = zeros(T, m, n)` where `n` is the number of B-spline coefficients.
+"""
+function piecewise_representation!(
+      w::AbstractArray{T}, cd::AbstractArray{T}, τ::AbstractVector) where {T}
+
+    m, n = size(cd)  # m is the order. n is the number of B-splines.
+    s = zeros(T, m)
+    factorials = cumprod(Iterators.flatten((1:1, 1:(m-1)))) # factorial(j-1)
+    for i = 2:n
+        all_derivatives!(s, cd, m, τ[i])
+        for j = 1:m
+            w[j, i] = s[j] / factorials[j]
+        end
+    end
+    # this is for x_1 from below.
+    all_derivatives!(s, cd, m, τ[1])
+    for jj = 1:m
+        w[jj, 1] = s[jj] / factorial(j - 1)
+    end
+    nothing
+end

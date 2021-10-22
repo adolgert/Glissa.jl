@@ -23,6 +23,7 @@ order = 3  # polynomial order = degree + 1.
 
 # Argument is the x of the left-hand side of the interval.
 function bspline_l(lefthandside::Int)
+    # make an axis that has no repeated values, so multiplicity 1.
     y = UnitRange{Rational{Int}}(-order, 2*order)
     l = searchsorted(y, lefthandside).start
     N = zeros(Num, order + 1)
