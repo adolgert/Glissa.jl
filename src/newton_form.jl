@@ -2,7 +2,7 @@
 The Newton form for an interpolating polynomial represents ``f(x)`` at
 points ``\tau`` by a sum.
 
-``\sum_{i=0}^n f[x_0,\ldots,x_i]\prod_{j=0}^{i-1}(x-x_j)
+``\sum_{i=0}^n f[x_0,\ldots,x_i]\prod_{j=0}^{i-1}(x-x_j)``
 
 Here, the `a` are the divided differences and ``\tau`` are the `x[j]`.
 """
@@ -40,7 +40,9 @@ end
 
 @doc raw"""
 Given an axis `τ` and values `f` on that axis, return a polynomial `y` such that
-``y(τ[i]) = f[i]``.
+
+``y(τ[i]) = f[i]``
+
 Construct a polynomial that interpolates a function, using polynomials with zeroes.
 This should match the constructor above. It comes from deBoor equation 4.2.
 """

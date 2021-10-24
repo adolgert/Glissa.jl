@@ -4,7 +4,7 @@
 
 ### Compare with polynomials
 
-The [`Notation`](@ref) section described polynomial splines as a set of polynomials defined on neighboring intervals. For computational purposes, we don't usually represent polynomial splines as a list of polynomial constants. Instead, we use B-splines, because they are a more compact representation and offer advantages for computations using polynomial splines.
+The [Notation](@ref) section described polynomial splines as a set of polynomials defined on neighboring intervals. For computational purposes, we don't usually represent polynomial splines as a list of polynomial constants. Instead, we use B-splines, because they are a more compact representation and offer advantages for computations using polynomial splines.
 
 Consider the difference between polynomial splines and B-splines for evaluation, the moment you compute $y$ from $x$. For polynomial splines, there are knots at $x_i$ and polynomial constants $c_{ij}$. In order to compute $y(x)$, you first find the interval $j$ such that $x_j \le x < x_{j+1}$. Then evaluate
 

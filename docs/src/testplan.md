@@ -2,14 +2,6 @@
 
 This package provides non-uniform and uniform B-spline implementations. The standard methods, from Schumaker, Dierkx, and back to Conte and de Boor, are complicated enough, but we might implement signal processing techniques, as well. All need to be checked.
 
-## Code Qualities
-
-1. Testability is first here, because these routines are meant for use by another library.
-2. Mutability will help these functions be adaptable to other uses, which is a main goal.
-3. Reliability isn't a thing because the work has such a strict interface.
-4. Usability is a lower factor here than usual.
-5. Security, this might make buffer overruns, so there's that.
-
 ## Risks for Testing
 
 This isn't a list of project risks but of where I see complexity in the code.
@@ -77,7 +69,7 @@ I'll need to translate from one to the other and back.
 
 ### Polynomial versus Spline
 
-The library rests on a few data structures, among with tests will need to translate.
+The library rests on a few data structures, among which tests will need to translate.
 
 1. The B-spline representation, which is a set of B-spline coefficients.
    a. An axis, `Float64[]` (or other type, but it's a vector. That's the point.).
