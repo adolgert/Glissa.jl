@@ -45,6 +45,7 @@ This isn't a list of project risks but of where I see complexity in the code.
     - Wikipedia
     - Gradshteyn and Ryzhik
 * Theoretically tractable
+  - Check B-spline invariants, such as the integral of the B-spline, its completeness over an interval.
   - Polynomial fit to a polynomially-generated set of data.
   - Construct B-spline, convert to polynomial, then convert back.
 * Limiting forms
@@ -58,6 +59,7 @@ This isn't a list of project risks but of where I see complexity in the code.
   - Check that this can be auto-differentiated.
   - Look for divide-by-zero. That can happen here for close knots.
   - Matrix solution stability. Can use numerical checks. We'll work with recommended solutions from literature, but the numerical checks of stability are reassurance about which code is ready to use and which isn't.
+
 
 ## Test Harness Specifics
 

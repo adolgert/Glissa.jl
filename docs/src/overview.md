@@ -12,7 +12,7 @@ I'm writing this library as a source of functions for contributing to the [Inter
 
 1. Given B-spline coefficients, evaluate a polynomial on an axis. It doesn't build representations of the splines internally but calculates them on the fly. These algorithms come from Schumaker. `schumaker.jl`
 
-2. Given B-spline coefficients, evaluate derivatives and integrals of polynomials on an axis. (Schumaker) `schumaker.jl`
+2. Given B-spline coefficients, evaluate derivatives and integrals of polynomials on an axis. (Schumaker) `bspline.jl`
 
 3. Given B-spline coefficients, create a representation of the polynomial spline, as polynomial pieces. This means it generates a separate polynomial for each interval on the axis. Also from Schumaker. `schumaker.jl`
 
@@ -20,4 +20,4 @@ I'm writing this library as a source of functions for contributing to the [Inter
 
 5. Construct B-spline values using recursive functions. These are old-school. Could use Direckx's implementation here. `divided_differences.jl`, `truncated.jl`.
 
-6. Solve for the coefficients of a B-spline using a matrix of constraint equations. This isn't efficient for anything, but it's the definition of a B-spline. My derivation. `bsplinepolynomial.jl`.
+6. Solve for the coefficients of a B-spline using a matrix of constraint equations. This isn't efficient for anything, but it's the definition of a B-spline. My derivation. `bsplineconstraints.jl`.

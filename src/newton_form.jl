@@ -1,6 +1,6 @@
 @doc raw"""
 The Newton form for an interpolating polynomial represents ``f(x)`` at
-points ``\tau``` by a sum.
+points ``\tau`` by a sum.
 
 ``\sum_{i=0}^n f[x_0,\ldots,x_i]\prod_{j=0}^{i-1}(x-x_j)
 

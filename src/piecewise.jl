@@ -17,7 +17,7 @@ abstract type PiecewisePolynomial{X,T} end
 
 struct PolySpline{X,T} <: PiecewisePolynomial{X,T}
     τ::AbstractVector{X}  # The abcissa
-    c::AbstractMatrix{T}
+    c::AbstractMatrix{T}  # Polynomial coefficients (power of x, interval index).
 end
 
 """The order is one plus the degree of the polynomial."""
