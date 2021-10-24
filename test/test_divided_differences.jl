@@ -58,7 +58,8 @@ end
         dd_exp = Glissa.divided_difference_explicit(subr.start, subr.stop, axis, ukf)
         dd_big = Glissa.divided_difference_explicit(subr.start, subr.stop, axis_big, ukf)
         eps = 1e-7
-        # I checked all three with BigFloat, and they agree to 1e-59, or something.
+        # I checked all three with BigFloat, and they agree to 1e-59, or something,
+        # so the dd_big is the true number.
         absdd = [
             abs((dd_det - dd_big) / dd_big)
             abs((dd_rec - dd_big) / dd_big)
@@ -76,7 +77,7 @@ end
     end
     @show maxdiff
     setprecision(BigFloat, float_precision)
-    @test maxdiff[1] < 5e-9
+    @test maxdiff[1] < 1e-8
     @test maxdiff[3] < maxdiff[1]  # ~1e-10
     @test maxdiff[2] < maxdiff[3]  # ~1e-10
 end

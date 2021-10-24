@@ -2,9 +2,9 @@ function axis_repeats_to_multiples(axis)
     uniques = copy(axis)
     multiplicity = zeros(Int, length(axis))
     ucnt = 0
-    last = axis[1] - one(eltype(axis))
+    last = zero(eltype(axis))
     for uidx in 1:length(axis)
-        if axis[uidx] != last
+        if ucnt == 0 || axis[uidx] != last
             ucnt += 1
             uniques[ucnt] = axis[uidx]
             multiplicity[ucnt] = 1
@@ -25,6 +25,6 @@ function axis_multiples_to_repeats(uniques, multiplicity)
         axis[ax_idx:(ax_idx + multiplicity[uidx] - 1)] .= uniques[uidx]
         ax_idx += multiplicity[uidx]
     end
-    @assert ax_idx = length(axis) + 1
+    @assert ax_idx == length(axis) + 1
     axis
 end
