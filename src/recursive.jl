@@ -4,9 +4,10 @@
     bsplineq(axis, order, index, x)
 
 This is the ``Q_i^m(x)`` B-spline, which is normalized to ``1/m``. Here is is defined by
-recursion.
+recursion. Needs `length(axis) ≤ index + order`. The `order` is 1 or greater.
 """
 function bsplineq_recursive(y, m, i, x)
+    @assert length(y) ≤ i + m
     if !(y[i] ≤ x < y[i+m])
         return zero(eltype(y))
     end

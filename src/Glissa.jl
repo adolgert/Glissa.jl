@@ -8,6 +8,7 @@ include("newton_form.jl")
 # Definitions of B-splines.
 include("truncated.jl")
 include("divided_differences.jl")
+include("recursive.jl")
 include("bsplineconstraints.jl")
 include("bspline.jl")
 
