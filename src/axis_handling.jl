@@ -1,3 +1,6 @@
+using Random
+using Distributions
+
 function axis_repeats_to_multiples(axis)
     uniques = copy(axis)
     multiplicity = zeros(Int, length(axis))

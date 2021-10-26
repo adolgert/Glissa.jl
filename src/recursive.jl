@@ -13,20 +13,24 @@ function bsplineq_recursive(y, m, i, x)
     end
 
     if m == 1
-        1/(y[i+1] - y[i])
+        1 / (y[i+1] - y[i])
 
-    # repeated right knots: y[i] < y[i+1] == y[i+2] ... y[i+m]
-    elseif length(y) > 2 && all(y[(i+2):(i+m)] .== y[i + 1])
-        (x - y[i])^(m - 1) / (y[i+m] - y[i])^(m - 1)
+    else
+        repeated_knots = length(y) > 2 && all(y[(i + 1):(i + m - 1)] .== y[i+1])
 
-    # repeated left knots: y[i] == y[i+1] == y[i+2] ... y[i+m-1] < y[i+m]
-    elseif length(y) > 2 && all(y[(i+1):(i+m-1)] .== y[i])
-        (y[i+m] - x)^(m - 1) / (y[i+m] - y[i])
+        # repeated right knots: y[i] < y[i+1] == y[i+2] ... y[i+m]
+        if repeated_knots && y[i + m] == y[i + 1]
+            (x - y[i])^(m - 1) / (y[i+m] - y[i])^m
 
-    else # recurse
-        ((x - y[i]) * bsplineq_recursive(y, m - 1, i, x) +
-            (y[i + m] - x) * bsplineq_recursive(y, m - 1, i + 1, x)) /
-            (y[i + m] - y[i])
+        # repeated left knots: y[i] == y[i+1] == y[i+2] ... y[i+m-1] < y[i+m]
+        elseif repeated_knots && y[i] == y[i + 1]
+            (y[i+m] - x)^(m - 1) / (y[i+m] - y[i])^m
+
+        else # recurse
+            ((x - y[i]) * bsplineq_recursive(y, m - 1, i, x) +
+                (y[i + m] - x) * bsplineq_recursive(y, m - 1, i + 1, x)) /
+                (y[i + m] - y[i])
+        end
     end
 end
 
