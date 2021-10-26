@@ -21,3 +21,13 @@ using Glissa
         @test eltype(rep1) == eltype(unique)
     end
 end
+
+
+@testset "bspline_indices_in_interval" begin
+    mu = [2, 1, 3, 2, 2, 1]
+    order = 3
+    mi = Glissa.MultIndex(mu)
+    mi[4]
+    
+    cover = bspline_indices_in_interval(mu, order)
+end
