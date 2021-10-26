@@ -4,20 +4,27 @@
 # representation of the polynomial for the B-spline.
 
 
-# Algorithm 5.5: Given x in [y_l, y_l+1) to generate N^m_{l+1-m}(x) to N_l^m(x).
-# y is the axis. m is the order of the b-spline. The $l$ is found by a search of the axis,
-# and the axis can have repeated elements. This algorithm applies to axis intervals where
-# $y_{l+1} > y_l$, not equal to it. That tells us how to number the expansion coefficients, $c$.
+@doc raw"""
+    generate_normalized_bsplines!(N::AbstractVector{T}, y::AbstractVector, l, m, x::T) where {T}
+
+Given x in ``[y_l, y_l+1)`` to generate ``N^m_{l+1-m}(x)`` to ``N_l^m(x).``
+`y` is the axis. `m` is the order of the b-spline. The `l` is found by a search of the axis,
+and the axis can have repeated elements. This algorithm applies to axis intervals where
+$y_{l+1} > y_l$, not equal to it. That tells us how to number the expansion coefficients, `c`.
+It's Algorithm 5.5 from Schumaker's book.
+"""
 function generate_normalized_bsplines!(
     N::AbstractVector{T}, y::AbstractVector, l, m, x::T) where {T}
     @assert length(N) == m + 1
     @assert length(y) > l
 
     Q = N  # Use the incoming storage as a buffer in which to calculate Q.
-    Q[1:(m-1)] .= zero(T)
-    Q[m] = (y[l + 1] > y[l]) ? one(T) / (y[l + 1] - y[l]) : zero(T)
-    Q[m + 1] = zero(T)
+    Q[1:end] .= zero(T)
+    if (y[l + 1] > y[l])
+        Q[m] = one(T) / (y[l + 1] - y[l]) # else leave it zero.
+    end
     for j in 2:(m - 1)
+        # smallest i: m - (m-1) + 1, m -m, 1 + 1 = 2. largest = m
         for i in (m - j + 1):m
             denom = y[i + l - m + j] - y[i + l - m]
             a1 = (denom > 0) ? (x - y[i + l - m]) / denom : zero(T)
