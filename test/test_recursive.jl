@@ -77,20 +77,8 @@ end
     rng = Random.MersenneTwister(23429235)
     for trial_idx = 1:100
         T = Float64
-        order = rand(rng, 1:5)
-        index = rand(rng, 1:5)
-        uniques_cnt = rand(rng, (index + order):(index + order + 3))
-        uniques = sort(rand(rng, T, uniques_cnt))
-        mult_type = rand(rng, [:Single, :Same, :Random])
-        multiples = ones(Int, length(uniques))
-        if mult_type == :Same && order > 1
-            multiples .= rand(rng, 2:order)
-        elseif mult_type == :Random
-            p = vcat(ones(Int, order - 1), [0.1]) # discount the disconnected polynomial
-            multiples .= rand(rng, Categorical(p/sum(p)), length(multiples))
-        end
-        axis = Glissa.axis_multiples_to_repeats(uniques, multiples)
-
+        axis, uniques, multiples, order = Glissa.generate_random_polyspline_specification(rng, T)
+        uniques_cnt = length(uniques)
         poly_coeff_cnt = (uniques_cnt - 1) * order
         A = Glissa.polyspline_constraints!(uniques, multiples, order)
         # b is the right-hand-side of the Ac=b equation, and it's all zeroes for these constraints.
