@@ -181,3 +181,50 @@ function reduce_axis(multiplicity::AbstractVector, order, i)
 
     ((left_index, right_index), multiplicityprime)
 end
+
+
+
+@doc raw"""
+This reads a list of multiplicities and converts that into a matrix that represents
+the constraints indicated by those multiplicites. The resulting matrix defines the space
+of the given polynomial spline on this axis.
+"""
+function polyspline_constraints!(axis::AbstractArray{T}, multiplicity::AbstractVector{Int}, order) where {T}
+
+    degree = order - 1
+    @assert length(axis) == length(multiplicity)
+    interval_cnt = length(axis) - 1
+    boundary_conditions_cnt = 2 * order - multiplicity[1] - multiplicity[end]
+    knot_conditions_cnt = sum(order .- multiplicity[2:(length(multiplicity) - 1)])
+    mat = zeros(T, boundary_conditions_cnt + knot_conditions_cnt, interval_cnt * order)
+
+    # At the left-hand side
+    row_idx = 1
+    for deridx in 0:(degree - multiplicity[1])
+        # Left side of first interval.
+        derivat!(mat, axis, deridx, 1, row_idx, :Left, 1, order)
+        row_idx += 1
+    end
+
+    # Internal nodes
+    for k in 1:(interval_cnt - 1)
+        # At each join, the derivatives match.
+        # k + 1 because it's multiplicity of the vertex, which is 1 + interval index.
+        for deridx in 0:(degree - multiplicity[k + 1])
+            # Here, k is the index of the interval.
+            derivat!(mat, axis, deridx, k, row_idx, :Right, -1, order)
+            derivat!(mat, axis, deridx, k + 1, row_idx, :Left, 1, order)
+            row_idx += 1
+        end
+    end
+
+    # At the right-hand side
+    for deridx in 0:(degree - multiplicity[interval_cnt + 1])
+        # Right side of last interval.
+        derivat!(mat, axis, deridx, interval_cnt, row_idx, :Right, 1, order)
+        row_idx += 1
+    end
+
+    @assert row_idx == size(mat, 1) + 1
+    mat
+end
