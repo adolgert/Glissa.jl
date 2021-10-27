@@ -29,5 +29,5 @@ end
     mi = Glissa.MultIndex(mu)
     mi[4]
     
-    cover = bspline_indices_in_interval(mu, order)
+    cover = Glissa.bspline_indices_in_interval(mu, order)
 end
