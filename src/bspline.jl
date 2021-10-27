@@ -20,13 +20,11 @@ function generate_normalized_bsplines!(
 
     Q = N  # Use the incoming storage as a buffer in which to calculate Q.
     Q[1:end] .= zero(T)
-    if (y[l + 1] > y[l])
-        Q[m] = one(T) / (y[l + 1] - y[l]) # else leave it zero.
-    end
-    for j in 2:(m - 1)
-        # smallest i: m - (m-1) + 1, m -m, 1 + 1 = 2. largest = m
-        for i in (m - j + 1):m
-            denom = y[i + l - m + j] - y[i + l - m]
+    # The order one case is always on a non-zero interval given that l was found by search.
+    Q[m] = one(T) / (y[l + 1] - y[l])
+    for midx in 2:(m - 1)
+        for i in (m - midx + 1):m
+            denom = y[i + l - m + midx] - y[i + l - m]
             a1 = (denom > 0) ? (x - y[i + l - m]) / denom : zero(T)
             a2 = one(T) - a1
             Q[i] = a1 * Q[i] + a2 * Q[i + 1]
@@ -55,8 +53,12 @@ function evaluate_bspline56(c::AbstractArray{T}, y::AbstractArray, m, x::T) wher
     x
 end
 
+@doc raw"""
+    evaluate_bspline(c::AbstractArray{T}, y::AbstractArray, m, x::T) where {T}
 
-# Algorithm 5.8: Evaluate B-spline expansion at s Given x in [a,b]
+Evaluate B-spline with coefficients `c` on axis `y` of order `m` at `x`.
+This is Algorithm 5.8 from Schumaker.
+"""
 function evaluate_bspline(c::AbstractArray{T}, y::AbstractArray, m, x::T) where {T}
     l = searchsortedlast(y, x)
     cx = similar(c)
