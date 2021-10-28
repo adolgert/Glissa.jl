@@ -111,7 +111,7 @@ function bspline_indices_in_interval(multiples, order)
         end
     end
     # This is to match the order that Schumaker uses.
-    sort(cover, dims=1, rev = true, lt=less_than_cover)
+    sort(cover, dims=1, rev = false, lt=less_than_cover)
 end
 
 

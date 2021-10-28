@@ -49,23 +49,9 @@ using Glissa
                 # Use the padded axis here.
                 Glissa.generate_normalized_bsplines!(ans_iter, axis, l, order, x)
                 @show ans_rec, ans_iter
-                for eg_idx in 1:order
-                    if cover[eg_idx, interval_idx] > 0
-                        ans_rec1 = ans_rec[eg_idx]
-                        minerr = Inf
-                        for check_iter in 1:order
-                            err = abs((ans_iter[check_iter] - ans_rec1) / ans_rec1)
-                            minerr = min(err, minerr)
-                        end
-                        largest_err = max(minerr, largest_err)
-                        if !(minerr < 1e-13)
-                            @show order, multiples, uniques
-                            @show cover
-                            @show x, ans_rec, ans_iter
-                            @test rec1_found
-                        end
-                    end
-                end
+                err = maximum(abs.((ans_rec - ans_iter[1:order]) ./ ans_rec))
+                largest_err = max(err, largest_err)
+                @test err < 1e-13
             end
         end
     end
