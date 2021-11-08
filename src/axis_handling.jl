@@ -2,89 +2,6 @@ using Random
 using Distributions
 using Logging
 
-function axis_repeats_to_multiples(axis)
-    uniques = copy(axis)
-    multiplicity = zeros(Int, length(axis))
-    ucnt = 0
-    last = zero(eltype(axis))
-    for uidx in 1:length(axis)
-        if ucnt == 0 || axis[uidx] != last
-            ucnt += 1
-            uniques[ucnt] = axis[uidx]
-            multiplicity[ucnt] = 1
-            last = axis[uidx]
-        else
-            multiplicity[ucnt] += 1
-        end
-    end
-    @assert sum(multiplicity) == length(axis)
-    (uniques[1:ucnt], multiplicity[1:ucnt])
-end
-
-
-function axis_multiples_to_repeats(uniques, multiplicity)
-    axis = zeros(eltype(uniques), sum(multiplicity))
-    ax_idx = 1
-    for uidx in 1:length(uniques)
-        axis[ax_idx:(ax_idx + multiplicity[uidx] - 1)] .= uniques[uidx]
-        ax_idx += multiplicity[uidx]
-    end
-    @assert ax_idx == length(axis) + 1
-    axis
-end
-
-
-bspline_count(axis::AbstractVector{T}, order) where {T <: Real} = length(axis) - order
-bspline_count(multiples::AbstractVector{T}, order) where {T <: Integer} = sum(multiples) - order
-
-
-struct MultIndex
-    multiples::Vector{Int}
-end
-
-function Base.getindex(mi::MultIndex, i::Int)
-    cm = cumsum(mi.multiples)
-    j = searchsortedfirst(cm, i)
-    if j ≤ length(mi.multiples)
-        mult_idx = mi.multiples[j] - cm[j] + i
-        (j, mult_idx)
-    else
-        (length(mi.multiples) + 1, 1)
-    end
-end
-
-
-function getget(mi::MultIndex, i::Int)
-    interval_cnt = length(mi.multiples) - 1
-    interval_idx = 1
-    multiple_idx = 1
-    bidx = 1
-    while interval_idx ≤ interval_cnt
-        if bidx == i
-            return (interval_idx, multiple_idx)
-        end
-        bidx += 1
-        multiple_idx += 1
-        if multiple_idx > mi.multiples[interval_idx]
-            multiple_idx = 1
-            interval_idx += 1
-        end
-    end
-    return (interval_cnt + 1, 1)
-end
-
-function less_than_cover(i, j)
-    if i == 0 && j == 0
-        false
-    elseif i == 0
-        false
-    elseif j == 0
-        true
-    else
-        i < j
-    end
-end
-
 
 """
     RepeatedIndex(multiple::AbstractVector)
@@ -143,8 +60,90 @@ Base.last(ri::RepeatedIndex) = ri.cumulant[end]
 Base.IteratorSize(::Type{RepeatedIndex}) = HasLength()
 Base.IteratorEltype(::Type{RepeatedIndex}) = HasEltype()
 Base.eltype(::RepeatedIndex{T}) where {T} = T
-Base.length(ri::RepeatedIndex) = ri.cumulant[end]
+Base.length(ri::RepeatedIndex) = length(ri.cumulant) > 0 ? ri.cumulant[end] : 0
 # size(ri::RepeatedIndex) = (1,)
+
+
+function axis_repeats_to_multiples(axis, ϵ = 0.0)
+    uniques = copy(axis)
+    multiplicity = zeros(Int, length(axis))
+    ucnt = 0
+    last = zero(eltype(axis))
+    for uidx in 1:length(axis)
+        if ucnt == 0 || abs(axis[uidx] - last) > ϵ
+            ucnt += 1
+            uniques[ucnt] = axis[uidx]
+            multiplicity[ucnt] = 1
+            last = axis[uidx]
+        else
+            multiplicity[ucnt] += 1
+        end
+    end
+    @assert sum(multiplicity) == length(axis)
+    (uniques[1:ucnt], multiplicity[1:ucnt])
+end
+
+
+function axis_multiples_to_repeats(uniques, multiplicity)
+    ri = RepeatedIndex{Int}(multiplicity)
+    axis = zeros(eltype(uniques), length(ri))
+    for (aidx, midx) in enumerate(ri)
+        axis[aidx] = uniques[midx]
+    end
+    axis
+end
+
+
+bspline_count(axis::AbstractVector{T}, order) where {T <: Real} = length(axis) - order
+bspline_count(multiples::AbstractVector{T}, order) where {T <: Integer} = sum(multiples) - order
+
+
+struct MultIndex
+    multiples::Vector{Int}
+end
+
+function Base.getindex(mi::MultIndex, i::Int)
+    cm = cumsum(mi.multiples)
+    j = searchsortedfirst(cm, i)
+    if j ≤ length(mi.multiples)
+        mult_idx = mi.multiples[j] - cm[j] + i
+        (j, mult_idx)
+    else
+        (length(mi.multiples) + 1, 1)
+    end
+end
+
+
+function getget(mi::MultIndex, i::Int)
+    interval_cnt = length(mi.multiples) - 1
+    interval_idx = 1
+    multiple_idx = 1
+    bidx = 1
+    while interval_idx ≤ interval_cnt
+        if bidx == i
+            return (interval_idx, multiple_idx)
+        end
+        bidx += 1
+        multiple_idx += 1
+        if multiple_idx > mi.multiples[interval_idx]
+            multiple_idx = 1
+            interval_idx += 1
+        end
+    end
+    return (interval_cnt + 1, 1)
+end
+
+function less_than_cover(i, j)
+    if i == 0 && j == 0
+        false
+    elseif i == 0
+        false
+    elseif j == 0
+        true
+    else
+        i < j
+    end
+end
 
 
 function bspline_indices_in_interval(multiples, order)
