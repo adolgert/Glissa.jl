@@ -48,7 +48,7 @@ end
 function evaluate(totalaxis::AbstractVector, bsplines::AbstractVector, x)
   i = searchsortedlast(totalaxis, x)
   total::eltype(bsplines[1]) = 0
-  for j in 1:length(bsplines)
+  for j in eachindex(bsplines)
     # i is the index of the polynomial piece. The bounds are axis vertices, so 1 + pieces.
     if i ≥ bsplines[j].bounds.start && i < bsplines[j].bounds.stop
       total += bsplines[j](x)

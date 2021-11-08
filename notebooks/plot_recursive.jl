@@ -11,7 +11,7 @@ function plot_splines(uniques, multiples, order)
     y = similar(x)
     plotout = nothing
     for bidx in 1:bspline_cnt
-        for yi in 1:length(y)
+        for yi in eachindex(y)
             y[yi] = Glissa.bsplineq_recursive(axis, order, bidx, x[yi])
         end
         if bidx == 1

@@ -73,7 +73,7 @@ end
         i = searchsortedlast(axis, x)
         @debug "{N}"
         match_idx = 1
-        for j in 1:length(splines)
+        for j in eachindex(splines)
             if i ≥ splines[j].bounds.start && i < splines[j].bounds.stop
                 value = splines[j](x)
                 @debug "$j $(splines[j].bounds) $value $(match_idx)"
@@ -118,7 +118,7 @@ end
         i = searchsortedlast(axis, x)
         @debug "{N}"
         match_idx = 1
-        for j in 1:length(splines)
+        for j in eachindex(splines)
             if i ≥ splines[j].bounds.start && i < splines[j].bounds.stop
                 value = splines[j](x)
                 @debug "$j $(splines[j].bounds) $value $(match_idx)"
@@ -163,7 +163,7 @@ end
         i = searchsortedlast(axis, x)
         println(N)
         match_idx = 1
-        for j in 1:length(splines)
+        for j in eachindex(splines)
             if i ≥ splines[j].bounds.start && i < splines[j].bounds.stop
                 value = splines[j](x)
                 println("$j $(splines[j].bounds) $value $(match_idx)")

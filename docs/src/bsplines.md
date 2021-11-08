@@ -2,35 +2,40 @@
 
 ## Introduction
 
-### Compare with polynomials
+The [Wikipedia B-spline](https://en.wikipedia.org/wiki/B-spline) article tells you how to calculate them but doesn't describe what defines a B-spline. That definition will be useful for deriving, understanding, and testing algorithms, so let's cover it here.
+
+### Compare with polynomials for interpolation
 
 The [Notation](@ref) section described polynomial splines as a set of polynomials defined on neighboring intervals. For computational purposes, we don't usually represent polynomial splines as a list of polynomial constants. Instead, we use B-splines, because they are a more compact representation and offer advantages for computations using polynomial splines.
 
-Consider the difference between polynomial splines and B-splines for evaluation, the moment you compute $y$ from $x$. For polynomial splines, there are knots at $x_i$ and polynomial constants $c_{ij}$. In order to compute $y(x)$, you first find the interval $j$ such that $x_j \le x < x_{j+1}$. Then evaluate
+On an axis with points at `(0, 1, 2, 3, 4)`, with free boundary conditions, there are 6 degree-2 B-splines.
 
-$y(x) = \sum_{i=1}^{i=m} c_{ij} x^{i-1}.$
+![Order 3 Splines](order3splines.png)
 
-On the other hand for B-splines, each B-spline is some function $B_j(x)$, where $j$ is the index of that B-spline in the interval. Here, you evaluate $y(x)$ with a sum over all B-splines
+Each B-spline is a function that's defined over the whole interval, but, at the same time, it's only non-zero over at-most $d$ contiguous intervals.
+
+Imagine that our goal is to fit data with a polynomial spline. We have points to fit, and they are between some $x_1$ and $x_{k+2}$, where we call the endpoint $k+2$ so that the count of internal knots is $k$. The first step is to divide the axis into intervals. At each knot where intervals meet, we get to decide, beforehand, whether the fit polynomial should be $C^0$-smooth (continuous), $C^1$-smooth (once differentiable), or as smooth as possible $C^{d-1}$-smooth. We can choose this knot-by-knot, if we want.
+
+Now how would we do this fit with polynomials? For each interval, there is a separate polynomial $y_j$.
+
+$y_j(x) = \sum_{i=1}^{i=m} c_{ij} (x-x_j)^{i-1}$
+
+We could fit the points in order to find the $c_{ij}$ constants. For $k+1$ intervals on $k$ knots, there would be $(d+1)(k+1)$ constants to choose. When solving for the constants, we need to include equations that assert smoothness across the knots.
+
+On the other hand, B-splines are functions that are designed, from their definition, to obey smoothness constraints. There are also fewer constants to choose becasue the final fit will be a sum of the B-splines.
 
 $y(x) = \sum_j c_j B_j(x).$
 
-Only a few of the $B_j$ contribute to the sum, but it's a simpler evaluation, and there is only one constant for each B-spline. And, as a neat trick, we don't need to store the polynomials that define the $B_j(x)$. They are quick to calculate from the knots.
+That means there are exactly as many constants $c_j$ as we have degrees of freedom in the problem. If we are fitting with maximally-smooth polynomials, then there are $k+2d$ B-splines, total. And, as a neat trick, we don't need to store the polynomials that define the $B_j(x)$. They are quick to calculate from the knots.
+
+**Prefiltering** is a name for finding the $c_j$ values that make a set of B-splines interpolate a set of points. You're taking data points $(x_p, y_p)$ and solving for the $c_j$ that make a B-spline-defined polynomial that matches them.
 
 
-### Use for interpolation
+## B-spline definition from its constraints
 
-One use of splines is to interpolate points. Given a set of values $y_k$ at points, $x_k$, what are the constants, $c_j$ for which
+B-splines are a basis set for polynomial splines on a particular axis, $x_1 < x_2 < x_3 \ldots < x_{k+2}$, with a given set of natural boundary conditions. Because they are a basis set, every allowable polynomial spline with those boundary conditions can be written as a sum of the B-splines for that axis. The set of B-splines reduces the amount of storage needed for a polynomial spline and reduces the computation needed to fit points with a polynomial spline. Now, how could we calculate the polynomial representation of any one of the B-splines for a given axis?
 
-$y_k = \sum_j c_j B_j(x_k)?$
-
-This is a set of $k$ equations with $j$ unknowns. If the equations and unknowns match, then this is a matrix equation to solve. For interpolation, finding the $c_j$ from the $(x_k, y_k)$ is considered a prefiltering step for B-splines because it is then the $c_j$ that you save.
-
-
-## B-spline definition
-
-B-splines are a basis set for polynomial splines on a particular axis, $x_1 < x_2 < x_3 \ldots < x_{k+1}$, with a given set of natural boundary conditions. Because they are a basis set, every allowable polynomial spline with those boundary conditions can be written as a sum of the B-splines for that axis. The set of B-splines sounds useful, so how could we calculate the polynomial representation of any one of the B-splines for a given axis?
-
-If we look for the polynomial pieces that define a single B-spline, we start by picking a left-most point, say $x_i$. Then the B-spline will be zero to the left, positive for some number of intervals, say $p$ intervals. And then it will be zero to the right of that. We can count the unknown values as $p$ intervals of polynomials of degree $d$, so there are $p(d+1)$ unknown values. Oddly, we don't know the number of intervals for this B-spline yet, but continuity conditions will tell us.
+Let's compute the polynmial coefficients $c_{ij}$ that define a single B-spline on an axis. Start by picking a left-most point, some $x_j$. Then the B-spline will be zero to the left, positive for some number of intervals, say $p$ intervals. And then it will be zero to the right of that. We can count the unknown values as $p$ intervals of polynomials of degree $d$, so there are $p(d+1)$ unknown values. Oddly, we don't know the number of intervals for this B-spline yet, but continuity conditions will tell us what $p$ must be.
 
 Each continuity condition, at the knot between two intervals, is a constraint on the B-spline, and the sum of the number of constraints must equal the number of unknown polynomial constants, in order for this B-spline to be well-defined. If the multiplicity of each knot is 1, then the number of constraints is $d$. In general, there are $d+1-m_j$ constraints at each knot, where $m_j$ is knot multiplicity. Over $p$ intervals, that makes $(p-1)(d+1) - \sum_j m_j$ constraints.
 
@@ -89,7 +94,7 @@ I'm wondering how to write an algorithm for B-splines that uses multiplicity ins
 
 The count of axis points is related to the cumulative multiplicity.
 
-$M_i = \sum_{j=1}^i m_i$
+$M_j = \sum_{i=1}^j m_i$
 
 The $i$-th B-spline can be written in terms of multiplicity if we think of it as having $i-1$ cumulative multiplicity to the left of it. If we are looking at interval $j$, then $M_j$ is the total number of axis points to the left. That means the last B-spline to cover this interval is $M_j$ and the first B-spline to cover it will be $M_j-m + 1$, where $m$ is the order.
 
@@ -100,4 +105,4 @@ We don't calculate the polynomial representation of B-splines. We don't need to,
 
 In order to test the software, we can calculate the polynomial representation explicitly. We do that by turning the section above into a set of equations and then solving those equations.
 
-First, define the problem. There will be and axis $(x_1,x_2,\ldots x_{k+1})$. Each internal knot of that axis will have a multiplicity, $m_j$. That's the input, and the output will be a set of B-spline polynomials.
+First, define the problem. There will be and axis $(x_1,x_2,\ldots x_{k+2})$. Each internal knot of that axis will have a multiplicity, $m_j$. That's the input, and the output will be a set of B-spline polynomials.

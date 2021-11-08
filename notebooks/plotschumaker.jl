@@ -12,7 +12,7 @@ struct PolyBSpline{X,T} <: PiecewisePolynomial{X,T}
   function evaluate(totalaxis::AbstractVector, bsplines::AbstractVector, x)
     i = searchsortedlast(totalaxis, x)
     total::eltype(bsplines[1]) = 0
-    for j in 1:length(bsplines)
+    for j in eachindex(bsplines)
       if i ≥ bsplines[j].bounds.start && i < bsplines[j].bounds.stop
         total += bsplines[j](x)
       end
@@ -73,7 +73,7 @@ for trial_idx in 1:20
     i = searchsortedlast(axis, x)
     println(N)
     match_idx = 1
-    for j in 1:length(splines)
+    for j in eachindex(splines)
         if i ≥ splines[j].bounds.start && i < splines[j].bounds.stop
             value = splines[j](x)
             println("$j $(splines[j].bounds) $value $(match_idx)")

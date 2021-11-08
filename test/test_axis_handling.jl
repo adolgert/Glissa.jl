@@ -42,7 +42,7 @@ end
         push!(indices, i)
     end
     @assert length(indices) == sum(m)
-    for j in 1:length(indices)
+    for j in eachindex(indices)
         k = ri[j]
         @test k == indices[j]
     end

@@ -4,9 +4,9 @@ This defines terms in order to help read the code.
 
 ## Polynomial
 
-A **polynomial** is a function of $x$, with constants $c_i$, of the form
+A **polynomial** is a function of $x$, relative to some $x_j$, with constants $c_i$, of the form
 
-$c_1 + c_2 (x - x_1) + c_3 (x - x_1)^2$
+p_j(x) = $c_1 + c_2 (x - x_j) + c_3 (x - x_j)^2 = \sum_{i=1}^{i=d+1}c_i(x-x_j)^{i-1}$
 
 The polynomial above has a **degree** of $d=2$ because $(x-x_1)^2$ is the largest power. It has **order** $m=3$ because there are 3 constants $(c_1, c_2, c_3)$. In Julia, you can evaluate a polynomial with [`evalpoly`](https://docs.julialang.org/en/v1/base/math/#Base.Math.evalpoly).
 
@@ -19,7 +19,7 @@ y = evalpoly(3, c)
 
 ## Piecewise Polynomial
 
-Separate the $x$-axis into $(x_1, x_2, x_3, x_4... x_{k+1})$ so that there are $k$ intervals, where **interval** $j$ is the axis between $x_j$ and $x_{j+1}$, not including the endpoint $x_{j+1}$. Now define a polynomial on each interval. Each of these is a **polynomial piece**. The $x$-values, excluding the endpoints, are called **knots.**
+Separate the $x$-axis into $(x_1, x_2, x_3, x_4... x_{k+2})$ so that there are $k + 1$ intervals, where **interval** $j$ is the axis between $x_j$ and $x_{j+1}$, not including the endpoint $x_{j+1}$. Now define a polynomial on each interval. Each of these is a **polynomial piece**. The $x_2\ldots x_{k+1}$-values, which excludes the endpoints, are called **knots.**
 
 We need two indices on the constants, so they are now $c_{ij}$, where the row is the polynomial constant and the column is the polynomial piece. In addition, we assume all polynomial pieces have the same degree.
 
@@ -44,3 +44,13 @@ At the left-most $x_1$ and the right-most $x_{k+1}$, we can define boundary cond
 For a degree $d=2$ polynomial, we can require the value to be zero and the first derivative to be zero. That's up to 2 boundary conditions. If we required more, it would set the polynomial to be zero within the interval neighboring the boundary.
 
 A boundary condition at $x_1$ or $x_{k+1}$ is kind of like a continuity condition with some polynomial piece that's outside the axis of the polynomial spline. Because of this similarity, we can represent boundary conditions by 1) defining values for a neighboring polynomial on each side and 2) assigning a multiplicity to the endpoints the same way we assign multiplicity to the knots. In this case, a multiplicity of 1 means that, at the endpoint, the polynomial piece is $C^{d-1}$ continuous with the polynomial outside. A multiplicity of $d+1$ means there is no continuity, so there are no boundary conditions at that endpoint.
+
+| Degree | Boundary Multiplicity | Continuity with Zero       |
+|--------|-----------------------|----------------------------|
+| 2      | 3                     | not continuous             |
+| 2      | 2                     | $C^0$ continuous           |
+| 2      | 1                     | $C^1$, once differentiable |
+| 3      | 4                     | not continuous             |
+| 3      | 3                     | $C^0$                      |
+| 3      | 2                     | $C^1$                      |
+| 3      | 1                     | $C^2$ twice differentiable |

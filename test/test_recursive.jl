@@ -94,21 +94,21 @@ end
 
         pts = generate_test_points(uniques, order + 1)
         ytrue = similar(pts)
-        for genidx in 1:length(pts)
+        for genidx in eachindex(pts)
             ytrue[genidx] = polyspline(pts[genidx])
         end
 
         bspline_cnt = sum(multiples) - order
         M = zeros(T, length(pts), bspline_cnt)
         for bidx in 1:bspline_cnt
-            for trial_idx in 1:length(pts)
+            for trial_idx in eachindex(pts)
                 M[trial_idx, bidx] = Glissa.bsplineq_recursive(axis, order, bidx, pts[trial_idx])
             end
         end
 
         bspline_coeffs = LinearAlgebra.pinv(M) * ytrue
         err = zeros(T, length(ytrue))
-        for check_idx in 1:length(pts)
+        for check_idx in eachindex(pts)
             yt = zero(T)
             for bidx in 1:bspline_cnt
                 yt += bspline_coeffs[bidx] * Glissa.bsplineq_recursive(axis, order, bidx, pts[check_idx])

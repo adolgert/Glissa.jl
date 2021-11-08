@@ -88,7 +88,7 @@ function divdiff_repeats(axis, f)
     uniques, multiples = axis_repeats_to_multiples(axis)
     total = zero(eltype(axis))
     denominator = vandermonde_determinant_repeats(uniques, multiplicity)
-    for ax_idx in 1:length(uniques)
+    for ax_idx in eachindex(uniques)
         msave = multiplicity[ax_idx]
         for der_idx in 1:msave
             multiplicity[ax_idx] = der_idx - 1  # This can be zero.
@@ -116,7 +116,7 @@ Definition 2.49 of divided differences from Schumaker. Eqn 2.86.
 function divdiff(axis, f)
     u = vcat([x->x^(j-1) for j in 1:(length(axis) - 1)], [f])
     numerator = cross_matrix(axis, u)
-    denominator = cross_matrix(axis, [x->x^(j-1) for j in 1:length(axis)])
+    denominator = cross_matrix(axis, [x->x^(j-1) for j in eachindex(axis)])
     LinearAlgebra.det(numerator) / LinearAlgebra.det(denominator)
 end
 

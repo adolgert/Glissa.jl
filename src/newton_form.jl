@@ -48,7 +48,7 @@ This should match the constructor above. It comes from deBoor equation 4.2.
 """
 function single_polynomial(τ::Vector{X}, f::Vector{T}) where {T <: Real, X<: Real}
     a = zeros(T, length(f))
-    for i = 1:length(f)
+    for i = eachindex(f)
         total = one(T)
         for l1 = 1:(i - 1)
             total *= 1 / (τ[l1] - τ[i])

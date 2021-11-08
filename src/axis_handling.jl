@@ -69,7 +69,7 @@ function axis_repeats_to_multiples(axis, ϵ = 0.0)
     multiplicity = zeros(Int, length(axis))
     ucnt = 0
     last = zero(eltype(axis))
-    for uidx in 1:length(axis)
+    for uidx in eachindex(axis)
         if ucnt == 0 || abs(axis[uidx] - last) > ϵ
             ucnt += 1
             uniques[ucnt] = axis[uidx]

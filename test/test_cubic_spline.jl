@@ -9,7 +9,7 @@ using Test
     x = collect(0:0.1:pi)
     f = cos.(x)
     cs = cubic_spline(x, f, [0, 0]; slope=FreeSlope())
-    for i1 in 1:length(x)
+    for i1 in eachindex(x)
         @test abs(cs(x[i1]) - f[i1]) < 1e-9
     end
 end
@@ -26,7 +26,7 @@ end
     using Glissa
     Δ = (1e-5) * 2 .^ (0:14)
     maxerr = zeros(Float64, length(Δ))
-    for j in 1:length(Δ)
+    for j in eachindex(Δ)
         x = collect(0:(Δ[j]):(pi/2))
         f = cos.(x)
         cs = cubic_spline(x, f, [0, 0]; slope=FreeSlope())

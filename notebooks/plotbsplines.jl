@@ -12,7 +12,7 @@ end
 function evaluate(totalaxis::AbstractVector, bsplines::AbstractVector, x)
   i = searchsortedlast(totalaxis, x)
   total::eltype(bsplines[1]) = 0
-  for j in 1:length(bsplines)
+  for j in eachindex(bsplines)
     if i ≥ bsplines[j].bounds.start && i < bsplines[j].bounds.stop
       total += bsplines[j](x)
     end
@@ -44,6 +44,7 @@ order = 3
 T = Float64
 axis = T[0, 1, 2, 3, 4]
 multiplicity = [order, 2, 2, 2, order]
+multiplicity = [order, 1, 1, 1, order]
 @assert length(multiplicity) == length(axis)
 vcnt = sum(multiplicity)
 a = 0
@@ -64,13 +65,13 @@ plotsplines(splines, 3, true)
 plotallsplines(splines)
 xp = axis[1]:0.05:axis[end]
 yp = similar(xp)
-for i in 1:length(yp)
+for i in eachindex(yp)
 	yp[i] = evaluate(axis, splines, xp[i])
 end
 plot(xp, yp)
 
 evaluate(axis, splines, 1.5)
-for sidx in 1:length(splines)
+for sidx in eachindex(splines)
 	if 2 in splines[sidx].bounds
 		v = splines[sidx](1.5)
 		println("$sidx $(splines[sidx].bounds) $v")
