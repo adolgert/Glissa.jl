@@ -31,3 +31,19 @@ end
     
     cover = Glissa.bspline_indices_in_interval(mu, order)
 end
+
+
+@testset "RepeatedIndex narrative" begin
+    m = [2, 1, 3, 2, 2]
+    ri = Glissa.RepeatedIndex{Int}(m)
+    @test length(ri) == sum(m)
+    indices = Int[]
+    for i in ri
+        push!(indices, i)
+    end
+    @assert length(indices) == sum(m)
+    for j in 1:length(indices)
+        k = ri[j]
+        @test k == indices[j]
+    end
+end

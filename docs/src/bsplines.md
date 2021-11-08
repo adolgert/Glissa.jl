@@ -83,6 +83,17 @@ end
 As a mental check, can a single interval have a B-spline? It has no knots. We see that a B-spline, in this case, is well-defined because there is a solution to $0=b-d$, by setting $b$ boundary conditions at the left-hand side $x_l$ and right-hand side $x_r$. For the case of degree 2, there are three ways to do this. 1. Set $f(x_l)=0$, $f'(x_l)=0$. 2. Set $f(x_l)=0$ and $f(x_r)=0$. 3. Set $f(x_r)=0$ and $f'(x_r)=0$. It turns out that *every* interval has $d+1$ splines defined that are nonzero on that interval, no matter what the boundary conditions are.
 
 
+## How to count B-splines with multiplicity
+
+I'm wondering how to write an algorithm for B-splines that uses multiplicity instead of creating an axis that has repeated values where there are knots. When there is an axis, the answer is simple. If there $k+1$ points on the axis, then there are $k+1-m$ B-splines. The $i$-th B-spline is at axis point $\tau_i$. It's straightforward, but this changes when using multiplicity.
+
+The count of axis points is related to the cumulative multiplicity.
+
+$M_i = \sum_{j=1}^i m_i$
+
+The $i$-th B-spline can be written in terms of multiplicity if we think of it as having $i-1$ cumulative multiplicity to the left of it. If we are looking at interval $j$, then $M_j$ is the total number of axis points to the left. That means the last B-spline to cover this interval is $M_j$ and the first B-spline to cover it will be $M_j-m + 1$, where $m$ is the order.
+
+
 ## Calculating B-splines
 
 We don't calculate the polynomial representation of B-splines. We don't need to, because there are nifty functions that evaluate B-splines without calculating their polynomial constants. Want to derive those here? No, you can suffer through Schumaker's *Spline Functions: Basic Theory.* It's a rite of passage?

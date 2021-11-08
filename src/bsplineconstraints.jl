@@ -1,3 +1,5 @@
+using Logging
+
 # This notebook solves for B-splines of order 2 by constructing a matrix
 # of constraints and solving that matrix for coefficients of each part of the
 # polynomial. This will give you coefficients for any B-spline. If you want
@@ -66,7 +68,7 @@ end
 
 # Q(x) is normalized so that its integral is 1 / order
 function integralat!(mat::AbstractArray{T}, axis, interval, row, order) where {T}
-  # println("$(length(axis)) $interval")
+    @debug "$(length(axis)) $interval"
     for i in 1:order
         col = i + (interval - 1) * order
         mat[row, col] += (axis[interval + 1] - axis[interval])^i / i

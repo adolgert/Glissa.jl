@@ -31,7 +31,7 @@ using Glissa
         abs1 = abs((dd_det - dd_rec) / dd_det)
         abs2 = abs((dd_det - dd_exp) / dd_det)
         if abs1 ≥ eps || abs2 ≥ eps
-            @show i, subr, dd_det, dd_rec, dd_exp, abs1, abs2
+            # @show i, subr, dd_det, dd_rec, dd_exp, abs1, abs2
             @test abs1 < eps
             @test abs2 < eps
         end

@@ -22,7 +22,7 @@ using Test
         end
     end
     if length(missing_files) > 0
-        println("You forgot to include $(missing_files)")
+        @debug "You forgot to include $(missing_files)"
         @test length(missing_files) == 0
     end
     for tf in test_files

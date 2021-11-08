@@ -1,5 +1,6 @@
 using Random
 using Distributions
+using Logging
 
 function axis_repeats_to_multiples(axis)
     uniques = copy(axis)
@@ -83,6 +84,67 @@ function less_than_cover(i, j)
         i < j
     end
 end
+
+
+"""
+    RepeatedIndex(multiple::AbstractVector)
+
+Uses a multiplicity vector to present a vector as having repeated elements.
+If a vector is length 3, and `multiple` is `[2, 1, 3]``, then this index
+will return the values `[1, 1, 2, 3, 3, 3]`.
+"""
+struct RepeatedIndex{T<:Integer} <: AbstractUnitRange{T}
+    # Store the cumulant instead of the multiplicity vector because it's
+    # quicker to derive multiplicity from cumulant than to recompute the cumulant.
+    cumulant::AbstractVector{Int}
+    function RepeatedIndex{T}(multiple::AbstractVector) where {T<:Integer}
+        return new(convert(Vector{Int}, cumsum(multiple)))
+    end
+end
+
+
+function multiplicity(ri::RepeatedIndex, i)
+    if i > 1
+        ri.cumulant[i] - ri.cumulant[i-1]
+    else
+        ri.cumulant[1]
+    end
+end
+
+
+function Base.iterate(ri::RepeatedIndex{T}) where {T}
+    length(ri.cumulant) == 0 && return nothing
+    iterate(ri, (1, 0))
+end
+
+
+function Base.iterate(ri::RepeatedIndex{T}, state) where T
+    axis_idx, mult_idx = (state[1], state[2] + 1)
+    while true
+        mult_idx <= multiplicity(ri, axis_idx) && break
+        axis_idx += 1
+        axis_idx > length(ri.cumulant) && return nothing
+        mult_idx = 1
+    end
+    axis_idx, (axis_idx, mult_idx)
+end
+
+
+# The a-th index of the multiples vector is from the i=\sum_{0}^{a-1} m_i entry,
+# up to, but not including, the i=\sum_{0}^a m_i entry. This function inverts that,
+# so, given a, find i.
+function Base.getindex(ri::RepeatedIndex, i::Integer)
+    searchsortedlast(ri.cumulant, i - 1) + 1
+end
+
+
+Base.first(::RepeatedIndex) = 1
+Base.last(ri::RepeatedIndex) = ri.cumulant[end]
+Base.IteratorSize(::Type{RepeatedIndex}) = HasLength()
+Base.IteratorEltype(::Type{RepeatedIndex}) = HasEltype()
+Base.eltype(::RepeatedIndex{T}) where {T} = T
+Base.length(ri::RepeatedIndex) = ri.cumulant[end]
+# size(ri::RepeatedIndex) = (1,)
 
 
 function bspline_indices_in_interval(multiples, order)

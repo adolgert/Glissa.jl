@@ -48,7 +48,7 @@ using Glissa
                 l = searchsortedlast(axis, x)
                 # Use the padded axis here.
                 Glissa.generate_normalized_bsplines!(ans_iter, axis, l, order, x)
-                @show ans_rec, ans_iter
+                # @show ans_rec, ans_iter
                 err = maximum(abs.((ans_rec - ans_iter[1:order]) ./ ans_rec))
                 largest_err = max(err, largest_err)
                 @test err < 1e-13

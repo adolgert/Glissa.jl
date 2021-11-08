@@ -58,7 +58,7 @@ end
     for i in 1:(sum(multiplicity) - order)
         ((l, r), m) = Glissa.reduce_axis(multiplicity, order, i)
         coeffs = zeros(T, order, r - l)
-        println("$m l:r $(l):$(r)")
+        @debug "$m l:r $(l):$(r)"
         Glissa.bspline_by_matrix!(axis[l:r], coeffs, m, order, :N)
         splines[i] = PolyBSpline{T,T}(axis[l:r], coeffs, UnitRange{Int}(l, r))
     end
@@ -71,12 +71,12 @@ end
         N = zeros(T, order + 1)
         Glissa.generate_normalized_bsplines!(N, y, l, order, x)
         i = searchsortedlast(axis, x)
-        println(N)
+        @debug "{N}"
         match_idx = 1
         for j in 1:length(splines)
             if i ≥ splines[j].bounds.start && i < splines[j].bounds.stop
                 value = splines[j](x)
-                println("$j $(splines[j].bounds) $value $(match_idx)")
+                @debug "$j $(splines[j].bounds) $value $(match_idx)"
                 maxdiff = max(maxdiff, abs(N[match_idx] - value))
                 match_idx += 1
             end
@@ -103,7 +103,7 @@ end
     for i in 1:(sum(multiplicity) - order)
         ((l, r), m) = Glissa.reduce_axis(multiplicity, order, i)
         coeffs = zeros(T, order, r - l)
-        println("$m l:r $(l):$(r)")
+        @debug "$m l:r $(l):$(r)"
         Glissa.bspline_by_matrix!(axis[l:r], coeffs, m, order, :N)
         splines[i] = PolyBSpline{T,T}(axis[l:r], coeffs, UnitRange{Int}(l, r))
     end
@@ -116,12 +116,12 @@ end
         N = zeros(T, order + 1)
         Glissa.generate_normalized_bsplines!(N, y, l, order, x)
         i = searchsortedlast(axis, x)
-        println(N)
+        @debug "{N}"
         match_idx = 1
         for j in 1:length(splines)
             if i ≥ splines[j].bounds.start && i < splines[j].bounds.stop
                 value = splines[j](x)
-                println("$j $(splines[j].bounds) $value $(match_idx)")
+                @debug "$j $(splines[j].bounds) $value $(match_idx)"
                 maxdiff = max(maxdiff, abs(N[match_idx] - value))
                 match_idx += 1
             end

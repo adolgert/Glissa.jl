@@ -3,6 +3,7 @@ using Random
 using Distributions
 using Symbolics
 using Test
+using Logging
 
 @testset "Can extract subset of an axis for bsplines" begin
   # test axis reduction with reduce_axis
@@ -24,10 +25,10 @@ using Test
       end
     end
     @test sum(multiplicity) == vertex_cnt
-    println("ord $order mult $multiplicity")
+    @debug "ord $order mult $multiplicity"
     for i in 1:(vertex_cnt - order)
       ((l, r), m) = Glissa.reduce_axis(multiplicity, order, i)
-      println("i $i l $l r $r m $m")
+      @debug "i $i l $l r $r m $m"
       @test sum(m) == order + 1
       @test r - l + 1 == length(m)
       for j in l:r
@@ -77,7 +78,7 @@ end
       end
     end
     @test sum(multiplicity) == vertex_cnt
-    println("ord $order mult $multiplicity")
+    @debug "ord $order mult $multiplicity"
     T = Float64
     a::Float64 = 0.0
     b::Float64 = length(multiplicity) - 1
@@ -86,7 +87,7 @@ end
     for i in 1:(vertex_cnt - order)
       ((l, r), m) = Glissa.reduce_axis(multiplicity, order, i)
       coeffs = zeros(T, order, r - l) # A set of coefficients for each interval on the axis.
-      println("$(length(axis)) $(size(coeffs)) $m $order")
+      @debug "$(length(axis)) $(size(coeffs)) $m $order"
       # Using the Q splines, which are normed to 1/order.
       Glissa.bspline_by_matrix!(axis[l:r], coeffs, m, order, :Q)
       splines[i] = PolyBSpline{T,T}(axis[l:r], coeffs, UnitRange{Int}(l, r))
@@ -118,7 +119,7 @@ end
         multiplicity[midx] = 1
       end
     end
-    println("ord $order mult $multiplicity")
+    @debug "ord $order mult $multiplicity"
     T = Float64
     a::Float64 = 0.0
     b::Float64 = length(multiplicity) - 1
@@ -128,7 +129,7 @@ end
     for i in 1:spline_cnt
       ((l, r), m) = Glissa.reduce_axis(multiplicity, order, i)
       coeffs = zeros(T, order, r - l)
-      println("$(length(axis)) $(size(coeffs)) $m $order")
+      @debug "$(length(axis)) $(size(coeffs)) $m $order"
       Glissa.bspline_by_matrix!(axis[l:r], coeffs, m, order, :N)
       splines[i] = PolyBSpline{T,T}(axis[l:r], coeffs, UnitRange{Int}(l, r))
     end
