@@ -77,7 +77,7 @@ end
     end
     @show maxdiff
     setprecision(BigFloat, float_precision)
-    @test maxdiff[1] < 1e-8
+    @test maxdiff[1] < 2e-8
     @test maxdiff[3] < maxdiff[1]  # ~1e-10
     @test maxdiff[2] < maxdiff[3]  # ~1e-10
 end
