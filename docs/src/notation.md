@@ -6,7 +6,7 @@ This defines terms in order to help read the code.
 
 A **polynomial** is a function of $x$, relative to some $x_j$, with constants $c_i$, of the form
 
-p_j(x) = $c_1 + c_2 (x - x_j) + c_3 (x - x_j)^2 = \sum_{i=1}^{i=d+1}c_i(x-x_j)^{i-1}$
+$p_j(x) = $c_1 + c_2 (x - x_j) + c_3 (x - x_j)^2 = \sum_{i=1}^{i=d+1}c_i(x-x_j)^{i-1}$
 
 The polynomial above has a **degree** of $d=2$ because $(x-x_1)^2$ is the largest power. It has **order** $m=3$ because there are 3 constants $(c_1, c_2, c_3)$. In Julia, you can evaluate a polynomial with [`evalpoly`](https://docs.julialang.org/en/v1/base/math/#Base.Math.evalpoly).
 
