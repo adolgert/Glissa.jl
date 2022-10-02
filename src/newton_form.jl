@@ -1,8 +1,8 @@
 @doc raw"""
 The Newton form for an interpolating polynomial represents ``f(x)`` at
-points ``\tau``` by a sum.
+points ``\tau`` by a sum.
 
-``\sum_{i=0}^n f[x_0,\ldots,x_i]\prod_{j=0}^{i-1}(x-x_j)
+``\sum_{i=0}^n f[x_0,\ldots,x_i]\prod_{j=0}^{i-1}(x-x_j)``
 
 Here, the `a` are the divided differences and ``\tau`` are the `x[j]`.
 """
@@ -38,13 +38,17 @@ function (nf::NewtonForm{T})(x) where {T}
 end
 
 
-"""
+@doc raw"""
+Given an axis `τ` and values `f` on that axis, return a polynomial `y` such that
+
+``y(τ[i]) = f[i]``
+
 Construct a polynomial that interpolates a function, using polynomials with zeroes.
 This should match the constructor above. It comes from deBoor equation 4.2.
 """
 function single_polynomial(τ::Vector{X}, f::Vector{T}) where {T <: Real, X<: Real}
     a = zeros(T, length(f))
-    for i = 1:length(f)
+    for i = eachindex(f)
         total = one(T)
         for l1 = 1:(i - 1)
             total *= 1 / (τ[l1] - τ[i])

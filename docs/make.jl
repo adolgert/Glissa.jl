@@ -15,6 +15,12 @@ makedocs(;
     ),
     pages=[
         "Home" => "index.md",
+        "Notation" => "notation.md",
+        "B-splines" => "bsplines.md",
+        "Testing B-splines" => "testspaces.md",
+        "Reference" => "reference.md",
+        "Project Plan" => "projectplan.md",
+        "Test Plan" => "testplan.md"
     ],
 )
 

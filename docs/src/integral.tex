@@ -1,6 +1,7 @@
 \documentclass{article}
 \title{Integral of Cubic Splines}
 \begin{document}
+\section{Cubic Splines}
 This represents cubic splines as their Newton Form. Using $m$ as the order, so that
 the degree is $m-1$,
 \begin{equation}
@@ -14,4 +15,24 @@ The integral across an interval, $\Delta x_j=[x_j,x_{j+1})$, is
 \begin{equation}
  p_j(x) = \sum_{i=1}^{i=m} \frac{a_i}{i}\left[(x_{j+1}-x_{j})^i - (x_j-x_j)^i\right] = \sum_{i=1}^{i=m} \frac{a_i}{i}(x_{j+1}-x_{j})^i.
 \end{equation}
+
+\section{Divided Differences}
+\begin{eqnarray}
+f[x_0] & = & f(x_0) \\
+f[x_1] & = & f(x_1) \\
+f[x_2] & = & f(x_2) \\
+f[x_0,x_1] & = & \frac{f(x_0)}{(x_0-x_1)} + \frac{f(x_1)}{(x_1-x_0)} \\
+f[x_1,x_2] & = & \frac{f(x_1)}{(x_1-x_2)} + \frac{f(x_2)}{(x_2-x_1)} \\
+f[x_0,x_1,x_2] & = & \frac{f[x_0,x_1]}{x_0-x_2} + \frac{f[x_1,x_2]}{x_2-x_0} \\
+f[x_0,x_1,x_2] & = & \frac{f(x_0)}{(x_0-x_1)(x_0-x_2)} + \frac{f(x_1)}{(x_1-x_0)(x_0-x_2)} +  \\
+& &\frac{f(x_1)}{(x_1-x_2)(x_2-x_0)} +\frac{f(x_2)}{(x_2-x_1)(x_2-x_0)} \\
+f[x_0,x_1,x_2] & = & \frac{f(x_0)}{(x_0-x_1)(x_0-x_2)}+\frac{f(x_2)}{(x_2-x_1)(x_2-x_0)} + \\
+& & \frac{-f(x_1)(x_1-x_2)}{(x_0-x_1)(x_1-x_2)(x_0-x_2)} +
+\frac{f(x_1)(x_1-x_0)}{(x_0-x_1)(x_1-x_2)(x_0-x_2)}  \\
+f[x_0,x_1,x_2] & = & \frac{f(x_0)}{(x_0-x_1)(x_0-x_2)}+\frac{f(x_2)}{(x_2-x_1)(x_2-x_0)} + \\
+& & \frac{f(x_1)(x_2-x_0)}{(x_0-x_1)(x_1-x_2)(x_0-x_2)} \\
+f[x_0,x_1,x_2] & = & \frac{f(x_0)}{(x_0-x_1)(x_0-x_2)}+\frac{f(x_1)}{(x_1-x_0)(x_1-x_2)} + \\
+& & \frac{f(x_2)}{(x_2-x_1)(x_2-x_0)}
+\end{eqnarray}
+That final line agrees with the explicit algorithm for divided differences.
 \end{document}

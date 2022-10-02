@@ -1,12 +1,22 @@
 module Glissa
 
-include("divided_differences.jl")
-include("truncated.jl")
+# These are basic data structures.
+include("axis_handling.jl")
+include("piecewise.jl")
 include("newton_form.jl")
-include("bspline.jl")
-include("cubic_spline.jl")
 
-export CubicSpline
+# Definitions of B-splines.
+include("truncated.jl")
+include("divided_differences.jl")
+include("recursive.jl")
+include("bsplineconstraints.jl")
+include("bspline.jl")
+
+# Fitting with splines.
+include("cubic_spline.jl")
+include("schumaker.jl")
+
+export PiecewisePolynomial
 export cubic_spline
 export evaluate!
 export FreeSlope

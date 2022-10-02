@@ -9,7 +9,7 @@ using Test
     x = collect(0:0.1:pi)
     f = cos.(x)
     cs = cubic_spline(x, f, [0, 0]; slope=FreeSlope())
-    for i1 in 1:length(x)
+    for i1 in eachindex(x)
         @test abs(cs(x[i1]) - f[i1]) < 1e-9
     end
 end
@@ -26,7 +26,7 @@ end
     using Glissa
     Δ = (1e-5) * 2 .^ (0:14)
     maxerr = zeros(Float64, length(Δ))
-    for j in 1:length(Δ)
+    for j in eachindex(Δ)
         x = collect(0:(Δ[j]):(pi/2))
         f = cos.(x)
         cs = cubic_spline(x, f, [0, 0]; slope=FreeSlope())
@@ -135,6 +135,9 @@ end
 
 
 @testset "Hyman criterion matches splinefun in R" begin
+    if get(ENV, "testenvhasr", "True") == "False"
+        return
+    end
     using Glissa
     using RCall
     # this hyman filter comes from the R splinefun source code.
@@ -322,9 +325,9 @@ end
 
 @testset "Cubic spline derivative" begin
     using Glissa
-    cs = CubicSpline{Int,Float64}([0, 1, 2],
+    cs = Glissa.PolySpline{Int,Float64}([0, 1, 2],
         Float64[
-            1 2;
+            1 2
             3 7;
             4 0;
             1 -1
@@ -341,7 +344,7 @@ end
 
 @testset "Cubic spline multiplication" begin
     using Glissa
-    cs1 = CubicSpline{Int,Float64}([0, 1, 2],
+    cs1 = Glissa.PolySpline{Int,Float64}([0, 1, 2],
         Float64[
             1 2;
             3 7;
@@ -349,7 +352,7 @@ end
         ]
     )
     using Glissa
-    cs2 = CubicSpline{Int,Float64}([0, 1, 2],
+    cs2 = Glissa.PolySpline{Int,Float64}([0, 1, 2],
         Float64[
             2 2;
             1 -2
