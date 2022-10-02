@@ -135,6 +135,9 @@ end
 
 
 @testset "Hyman criterion matches splinefun in R" begin
+    if get(ENV, "testenvhasr", "True") == "False"
+        return
+    end
     using Glissa
     using RCall
     # this hyman filter comes from the R splinefun source code.
