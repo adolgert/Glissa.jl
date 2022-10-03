@@ -22,7 +22,7 @@ $y_j(x) = \sum_{i=1}^{i=m} c_{ij} (x-x_j)^{i-1}$
 
 We could fit the points in order to find the $c_{ij}$ constants. For $k+1$ intervals on $k$ knots, there would be $(d+1)(k+1)$ constants to choose. When solving for the constants, we need to include equations that assert smoothness across the knots.
 
-On the other hand, B-splines are functions that are designed, from their definition, to obey smoothness constraints. There are also fewer constants to choose becasue the final fit will be a sum of the B-splines.
+On the other hand, B-splines are functions that are designed, from their definition, to obey smoothness constraints. If constraints are built into the B-spline, we don't need to include equations to assert those same constraints. There are also fewer constants to choose becasue the final fit will be a sum of the B-splines.
 
 $y(x) = \sum_j c_j B_j(x).$
 
@@ -101,8 +101,4 @@ The $i$-th B-spline can be written in terms of multiplicity if we think of it as
 
 ## Calculating B-splines
 
-We don't calculate the polynomial representation of B-splines. We don't need to, because there are nifty functions that evaluate B-splines without calculating their polynomial constants. Want to derive those here? No, you can suffer through Schumaker's *Spline Functions: Basic Theory.* It's a rite of passage?
-
-In order to test the software, we can calculate the polynomial representation explicitly. We do that by turning the section above into a set of equations and then solving those equations.
-
-First, define the problem. There will be and axis $(x_1,x_2,\ldots x_{k+2})$. Each internal knot of that axis will have a multiplicity, $m_j$. That's the input, and the output will be a set of B-spline polynomials.
+We don't calculate the polynomial representation of B-splines. We don't need to, because there are nifty functions that evaluate B-splines without calculating their polynomial constants. The best source for this is Schumaker's *Spline Functions: Basic Theory.*

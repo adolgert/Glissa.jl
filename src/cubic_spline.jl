@@ -196,7 +196,10 @@ function cubic_spline(
     cubic_spline(τ, f, convert(typeof(f), fp); slope = slope)
 end
 
-
+"""
+Creates a cubic spline on abcissa `τ` with values `f` and endpoint slopes
+equal to `fp[1]` and `fp[2]`.
+"""
 function cubic_spline(
     τ::AbstractVector{X}, f::AbstractVector{T}, fp::AbstractVector{T};
     slope=FreeSlope()

@@ -225,21 +225,15 @@ end
 @testset "Cubic spline is compatible with reverse diff" begin
     using Glissa
     using ReverseDiff
-    x = [7.99, 8.09, 8.19, 8.7, 9.2, 10, 12, 15, 20]
-    x2 = collect(8:0.01:10)
-    f = [0, 2.76429e-5, 4.37498e-2, 0.169183, 0.469428, 0.943740, 0.998636, 0.999919, 0.999994]
-    function g(f::AbstractVector{T}, x1, x2) where {T}
-        cs = Glissa.cubic_spline(x1, f, zeros(T, 2); slope = Monotonic())
-        cs.(x2) 
+    function gg(f::AbstractVector{T}) where {T}
+        abcissa = [7.99, 8.09, 8.19, 8.7, 9.2, 10, 12, 15, 20]
+        x2 = collect(8:0.01:10)
+            cs = Glissa.cubic_spline(abcissa, f, zeros(T, 2); slope = Monotonic())
+        sum(cs.(x2))
     end
-    interp = g(f, x, x2)
-    f_tape = ReverseDiff.GradientTape(g, (f, x, x2))
-    compiled_f_tape = ReverseDiff.compile(f_tape)
-    inputs = (f, x, x2)
-    cfg = ReverseDiff.GradientConfig(inputs)
-    results = similar(interp)
-    # This doesn't work, and I'd like it to work.
-    # ReverseDiff.gradient!(results, compiled_f_tape, inputs)
+    f = [0, 2.76429e-5, 4.37498e-2, 0.169183, 0.469428, 0.943740, 0.998636, 0.999919, 0.999994]
+    grad = ReverseDiff.gradient(gg, f)
+    @show grad
 end
 
 

@@ -6,22 +6,20 @@ This defines terms in order to help read the code.
 
 A **polynomial** is a function of $x$, relative to some $x_j$, with constants $c_i$, of the form
 
-p_j(x) = $c_1 + c_2 (x - x_j) + c_3 (x - x_j)^2 = \sum_{i=1}^{i=d+1}c_i(x-x_j)^{i-1}$
+$p_j(x) = c_1 + c_2 (x - x_j) + c_3 (x - x_j)^2 = \sum_{i=1}^{i=d+1}c_i(x-x_j)^{i-1}$
 
-The polynomial above has a **degree** of $d=2$ because $(x-x_1)^2$ is the largest power. It has **order** $m=3$ because there are 3 constants $(c_1, c_2, c_3)$. In Julia, you can evaluate a polynomial with [`evalpoly`](https://docs.julialang.org/en/v1/base/math/#Base.Math.evalpoly).
+The polynomial above has a **degree** of $d=2$ because $(x-x_1)^2$ is the largest power. It has **order** $m=3$ because there are 3 constants $(c_1, c_2, c_3)$. By definition, $m=d+1$. In Julia, you can evaluate a polynomial with [`evalpoly`](https://docs.julialang.org/en/v1/base/math/#Base.Math.evalpoly).
 
 ```julia
-x = 5.5
-x1 = 5.0
-c = rand(3)
-y = evalpoly(3, c)
+c1, c2, c3 = rand(3)
+y = evalpoly(1.4, [c1, c2, c3])
 ```
 
 ## Piecewise Polynomial
 
-Separate the $x$-axis into $(x_1, x_2, x_3, x_4... x_{k+2})$ so that there are $k + 1$ intervals, where **interval** $j$ is the axis between $x_j$ and $x_{j+1}$, not including the endpoint $x_{j+1}$. Now define a polynomial on each interval. Each of these is a **polynomial piece**. The $x_2\ldots x_{k+1}$-values, which excludes the endpoints, are called **knots.**
+Separate the $x$-axis into $(x_1, x_2, x_3, x_4... x_{k+2})$ so that there are $k + 1$ intervals, where **interval** $j$ is the axis between $x_j$ and $x_{j+1}$, not including the endpoint $x_{j+1}$ which makes the interval closed on the left and open on the right. Now define a polynomial on each interval. Each of these is a **polynomial piece**. The $x_2\ldots x_{k+1}$-values, which excludes the endpoints, are called **knots.**
 
-We need two indices on the constants, so they are now $c_{ij}$, where the row is the polynomial constant and the column is the polynomial piece. In addition, we assume all polynomial pieces have the same degree.
+We need two indices on the constants, row $i$ for the polynomial constant and column $j$ for the polynomial piece, so they are now $c_{ij}$. In addition, we assume all polynomial pieces have the same degree. That does not need to be the case, and it may be useful for some computations to relax this assumption.
 
 ## Polynomial Spline
 
@@ -31,9 +29,9 @@ A **polynomial spline with simple knots** is a piecewise polynomial, of degree $
 
 A general **polynomial spline** guarantees that you don't have a situation where the derivatives agree across a knot, but the values aren't continuous. That may seem weird, but it's useful for some kinds of integration. Because of this restriction, we can think of each knot as having its own continuity condition. For instance, for a quadratic spline, each knot could be $C^0$ or $C^1$. For a quadratic spline, each knot could be $C^0$, $C^1$, $C^2$, or $C^3$.
 
-The **multiplicity** of a knot indicates its smoothness. For a degree $d$ polynomial, a multiplicity $m_j=1$ know has maximal smoothness, which is $C^{d-1}$. As multiplicity increases, smoothness across the knot decreases. The maximum multiplicity is $m_j=m$, where $m=d+1$ is the order of the polynomial. When $j_j=m$, then the two neighboring polynomial pieces are disconnected. Note that endpoints aren't knots, just places where intervals meet. In code, an array `m[i]` is a multiplicity vector, but an integer `m` is the order.
+The **multiplicity** of a knot indicates its smoothness. For a degree $d$ polynomial, a multiplicity $m_j=1$ know has maximal smoothness, which is $C^{d-1}$. As multiplicity increases, smoothness across the knot decreases. The maximum multiplicity is $m_j=m$, where $m=d+1$ is the order of the polynomial. When $m_j=m$, then the two neighboring polynomial pieces are disconnected. Note that endpoints aren't knots, just places where intervals meet. In code, an array `m[i]` is a multiplicity vector, but an integer `m` is the order.
 
-There is another way to represent knot multiplicity. When listing the knots, repeat values for the knots of higher multiplicity, so $(x_1, x_1, x_1, x_2, x_2, x_3, x_3 x_4, x_4, x_4)$. Some algorithms rely on neighboring knots sometimes being equal.
+There is another way to represent knot multiplicity. When listing the knots, repeat values for the knots of higher multiplicity, so an order 3 polynomial with multiplicity $m_j=2$ for its internal knots would have knot values of $(x_1, x_1, x_1, x_2, x_2, x_3, x_3, x_4, x_4, x_4)$. The knots on the boundaries will appear $m$ times when the polynomial spline is discontinuous at the boundary. Some algorithms rely on neighboring knots sometimes being equal to express multiplicity.
 
 There is some sense to using the word, multiplicity, to denote smoothness of splines. If three neighboring intervals are $C^2$ smooth, and you drag the knots together, shrinking the middle interval, the resulting neighboring intervals will only be $C^1$ smooth. Overlapping knots are equivalent to reduced continuity.
 
