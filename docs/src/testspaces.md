@@ -57,6 +57,6 @@ The matrix $M$ is created by making one row for each B-spline and one column for
 
 Finally, estimate the error.
 
-$|\vec{y}-M\vec{x}$
+$|\vec{y}-M\vec{x}|$
 
 That should be very small for all $\vec{w}$ we can create. We can run this in a loop with randomly-generated polynomial splines.
