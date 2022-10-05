@@ -1,30 +1,20 @@
 using LinearAlgebra
 
-# This file is about calculating divided differences.
-# Divided differences are the most common first presentation of B-splines.
-# When the axis has no repeated knots, these are simple to calculate, but I'm
-# having trouble finding clear descriptions of divided differences when the
-# knots repeat.
-#
-# You will see below several versions of definitions, so that I can check them
-# against each other.
-#
-# 1. Ratio of determinants for unique axis knots.
-# 2. Ratio of determinants for repeated axis knots.
-# 3. Recursive definition, applies to repeated knots.
-# 4. Explicit formula, only for unique knots.
-# 5. The B-splines themselves, defined using these divided differences.
+@doc raw"""
+    CrossMatrix{T} <: AbstractMatrix{T}
 
+Build divided-differences from this matrix representation.
+This is a very theoretical way to build a divided-difference, which makes it less
+susceptible to accidental typos.
 
-# Build divided-differences from this matrix representation.
-# This is a very theoretical way to build a divided-difference, which makes it less
-# susceptible to accidental typos.
-# u1(t1) u2(t1) u3(t1)  t are rows. u are columns.
-# u1(t2) u2(t2) u3(t2)
-# u1(t3) u2(t3) u3(t3)
-# The cross-matrix represents a matrix of functions over the axis.
-# This makes an AbstractMatrix so that we can call the usual LinearAlgebra.det to
-# get the determinant. Just makes it easier.
+  u1(t1) u2(t1) u3(t1)  t are rows. u are columns.
+  u1(t2) u2(t2) u3(t2)
+  u1(t3) u2(t3) u3(t3)
+
+The cross-matrix represents a matrix of functions over the axis.
+This makes an AbstractMatrix so that we can call the usual LinearAlgebra.det to
+get the determinant. Just makes it easier.
+"""
 struct CrossMatrix{T} <: AbstractMatrix{T}
     t::AbstractVector  # An array of axis coordinates
     u::AbstractVector  # An array of functions
@@ -39,6 +29,12 @@ Base.getindex(cm::CrossMatrix, i, j) = cm.u[j](cm.t[i])
 Base.size(cm::CrossMatrix) = (length(cm.t), length(cm.u))
 
 
+"""
+    vandermonde_determinant(axis)
+
+Given an axis, compute the determinant of the Vandermonde matrix
+defined by that axis.
+"""
 function vandermonde_determinant(axis)
     total = zero(eltype(axis))
     for i in 1:(length(axis) - 1)
@@ -50,7 +46,10 @@ function vandermonde_determinant(axis)
 end
 
 
-@doc raw"""The equation 2.67 in Schumaker is hard to understand. It reads, exactly,
+@doc raw"""
+    vandermonde_determinant_repeats(uniques, multiplicity)
+
+The equation 2.67 in Schumaker is hard to understand. It reads, exactly,
 
 $V(t_1,\ldots,t_m)=\prod_{1\le i<j\le d}(\tau_j-\tau_i)^{l_jl_i} \prod_{i=1}^d\prod_{\nu=1}^{l_i-1}\nu!$
 
@@ -81,6 +80,8 @@ end
 
 
 @doc raw"""
+    divdiff_repeats(axis, f)
+
 Divided differences that allow for derivatives.
 Schumaker page 46-7, eqn 2.89.
 """
@@ -107,6 +108,8 @@ end
 
 
 @doc raw"""
+    divdiff(axis, f)
+
 Definition 2.49 of divided differences from Schumaker. Eqn 2.86.
 
 > axis = 0:5
@@ -122,7 +125,10 @@ end
 
 
 """
-A recursive implementation of divided differences.
+DividedDifference{T}
+
+A recursive implementation of divided differences. This struct memo-izes the
+divided differences as they are created.
 """
 mutable struct DividedDifference{T}
     memo::Dict{Tuple{Int64,Int64},T}
@@ -141,6 +147,8 @@ end
 
 
 @doc raw"""
+    divided_difference(i::Integer, j::Integer, τ::AbstractVector, f::Function, dd::DividedDifference)
+
 Calculate divided differences of a function f at points τ, using recursion.
 
 $[\tau_i, \tau_{i+1},\ldots,\tau_j]f$
@@ -172,6 +180,8 @@ end
 
 
 """
+    divided_difference_explicit(i::Integer, k::Integer, τ::AbstractVector, f::Function)
+
 This explicit divided difference applies only when the axis is distinct.
 """
 function divided_difference_explicit(
@@ -197,6 +207,8 @@ end
 
 
 @doc raw"""
+    splineq_divided(y, m, i, x)
+
 A Q version of the B-spline on an axis y, order m, index i, at x.
 This version is defined using divided differences.
 """
@@ -212,6 +224,8 @@ end
 
 
 @doc raw"""
+    splinen_divided(y, m, i, x)
+
 An N version of the B-spline on an axis y, order m, index i, at x.
 This version is defined using divided differences.
 """

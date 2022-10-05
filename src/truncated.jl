@@ -1,4 +1,6 @@
 @doc raw"""
+    truncated(c, k, x)
+
 This is the truncated function that defines the Q B-spline.
 
 $(x - c)_{+}^k$
@@ -15,6 +17,8 @@ end
 
 
 """
+    truncated(c, k, x, n)
+
 A truncated function with a derivative with respect to `c`.
 """
 function truncated(c, k, x, n)
@@ -31,8 +35,11 @@ function truncated(c, k, x, n)
     end
 end
 
+
 """
-An explicit representation of the normalized B-spline.
+    normalized_bspline(i::Integer, kp1::Integer, λ::Vector{T}, x::T) where {T <: Real}
+
+An explicit representation of the normalized B-spline, written in terms of truncated functions.
 """
 function normalized_bspline(i::Integer, kp1::Integer, λ::Vector{T}, x::T) where {T <: Real}
     total = zero(T)

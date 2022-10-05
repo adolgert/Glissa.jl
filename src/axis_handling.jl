@@ -6,8 +6,11 @@ using Logging
 """
     RepeatedIndex(multiple::AbstractVector)
 
-Uses a multiplicity vector to present a vector as having repeated elements.
-If a vector is length 3, and `multiple` is `[2, 1, 3]``, then this index
+This is an unit range that will simplify algorithms that iterate
+over spline knots that have multiplicity. You create this `RepeatedIndex`
+by giving it the multiplicity of each knot, and it returns a unit range where
+the number of elements is the sum of the multiplicities. For instance,
+if `multiple` is `[2, 1, 3]``, then this index
 will return the values `[1, 1, 2, 3, 3, 3]`.
 """
 struct RepeatedIndex{T<:Integer} <: AbstractUnitRange{T}
@@ -29,6 +32,11 @@ function multiplicity(ri::RepeatedIndex, i)
 end
 
 
+"""
+    iterate(ri::RepeatedIndex{T}) where {T}
+
+This function makes the repeated index into an iterable abstract unit range.
+"""
 function Base.iterate(ri::RepeatedIndex{T}) where {T}
     length(ri.cumulant) == 0 && return nothing
     iterate(ri, (1, 0))
@@ -64,6 +72,14 @@ Base.length(ri::RepeatedIndex) = length(ri.cumulant) > 0 ? ri.cumulant[end] : 0
 # size(ri::RepeatedIndex) = (1,)
 
 
+"""
+    axis_repeats_to_multiples(axis, ϵ = 0.0)
+
+Given an abcissa of sorted real values, where some may be repeated, this
+returns a tuple with a) an abcissa of unique real values and b) an
+`Int` array with the multiplicity of each real value. The ϵ distinguishes
+when two real values are, or are not, equal.
+"""
 function axis_repeats_to_multiples(axis, ϵ = 0.0)
     uniques = copy(axis)
     multiplicity = zeros(Int, length(axis))
@@ -84,6 +100,13 @@ function axis_repeats_to_multiples(axis, ϵ = 0.0)
 end
 
 
+"""
+    axis_multiples_to_repeats(uniques, multiplicity)
+
+Converts a sorted list of real values and a multiplicity vector, of the same length,
+into a sorted list of real values with repeated values, according to the multiplicity
+vector. The total number of values will equal the sum of the `multiplicity`.
+"""
 function axis_multiples_to_repeats(uniques, multiplicity)
     ri = RepeatedIndex{Int}(multiplicity)
     axis = zeros(eltype(uniques), length(ri))
@@ -94,10 +117,28 @@ function axis_multiples_to_repeats(uniques, multiplicity)
 end
 
 
+"""
+    bspline_count(axis::AbstractVector{T}, order)
+    bspline_count(multiples::AbstractVector{T}, order)
+
+These return the number of B-spline basis functions on a set of intervals. The `axis`
+argument is a list of knots, possibly with repeated knots. The `multiples` argument
+is a list of the multiplicity of each knot on an axis.
+"""
 bspline_count(axis::AbstractVector{T}, order) where {T <: Real} = length(axis) - order
 bspline_count(multiples::AbstractVector{T}, order) where {T <: Integer} = sum(multiples) - order
 
 
+"""
+    MultIndex(multiples)
+
+This helps iterate over an axis defined by its multiplicity. Initialize it with
+a multiplicity vector, which is an array of the number of times each element is
+repeated. Then use `getindex` to find a tuple with a) the index into the abcissa
+and b) the index of this point within its multiplicity. For instance, for multiplicity
+`[3,2,2,3]`, an index of 5 would be the second value in the abcissa and the second
+of the two multiples at that value.
+"""
 struct MultIndex
     multiples::Vector{Int}
 end
@@ -146,6 +187,14 @@ function less_than_cover(i, j)
 end
 
 
+"""
+    bspline_indices_in_interval(multiples, order)
+
+For testing, this function tells you which B-splines defined on a sequence of
+intervals are defined on each of the intervals. For instance, if a set of intervals has
+a total of 12 B-splines defined, then the 5th interval might have 4 B-splines
+that are non-zero on that interval.
+"""
 function bspline_indices_in_interval(multiples, order)
     # Each spline covers between τ[i] and τ[i+order]
     mi = MultIndex(multiples)
@@ -176,8 +225,13 @@ function bspline_indices_in_interval(multiples, order)
 end
 
 
-# Create a polyspline axis.
-# This polyspline will have sum(multiples) - order Bsplines.
+"""
+    generate_random_polyspline_specification(rng, T)
+
+Create a polyspline axis for randomized testing of B-spline algorithms.
+This function returns an axis with multiplicity for B-splines of order
+between 1 and 5. This polyspline will have sum(multiples) - order Bsplines.
+"""
 function generate_random_polyspline_specification(rng, T)
     order = rand(rng, 1:5)
     multiples_cnt = rand(rng, (order + 1):(2*order + 1))

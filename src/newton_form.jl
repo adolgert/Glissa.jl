@@ -5,6 +5,8 @@ points ``\tau`` by a sum.
 ``\sum_{i=0}^n f[x_0,\ldots,x_i]\prod_{j=0}^{i-1}(x-x_j)``
 
 Here, the `a` are the divided differences and ``\tau`` are the `x[j]`.
+
+A NewtonForm is a functor, so evaluate it at the value `x` with `nf(x)`.
 """
 struct NewtonForm{T}
     τ::Vector
@@ -13,6 +15,8 @@ end
 
 
 """
+    NewtonForm(τ::Vector, f::Vector{T}) where {T <: Real}
+
 Construct a NewtonForm. From Conte and deBoor 1980, Eqn. 4.8.
 """
 function NewtonForm(τ::Vector, f::Vector{T}) where {T <: Real}
@@ -39,6 +43,8 @@ end
 
 
 @doc raw"""
+    single_polynomial(τ::Vector{X}, f::Vector{T}) where {T <: Real, X<: Real}
+
 Given an axis `τ` and values `f` on that axis, return a polynomial `y` such that
 
 ``y(τ[i]) = f[i]``

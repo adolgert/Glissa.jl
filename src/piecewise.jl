@@ -11,6 +11,9 @@ It should be the case that one(T) * one(X) is of type T.
 This can be a spline of another order. It's just a matter of the dimensions
 of the coefficient array, `c`. You would evaluate this with
 `evalpoly(x-τ[i], c[1:end, i])`, where `i` is the interval.
+
+Every piecewise polynomial is a functor, so you can evaluate it
+at a point with `ps(x)`.
 """
 abstract type PiecewisePolynomial{X,T} end
 
@@ -20,16 +23,32 @@ struct PolySpline{X,T} <: PiecewisePolynomial{X,T}
     c::AbstractMatrix{T}  # Polynomial coefficients (power of x, interval index).
 end
 
-"""The order is one plus the degree of the polynomial."""
+"""
+    order(ps::PiecewisePolynomial)
+
+The order is one plus the degree of the polynomial.
+"""
 order(ps::PiecewisePolynomial) = size(ps.c, 1)
 
-@doc raw"""Polynomial degree, so 2 for ``x^2``"""
+@doc raw"""
+    degree(ps::PiecewisePolynomial)
+
+Polynomial degree, so 2 for ``x^2``
+"""
 degree(ps::PiecewisePolynomial) = order(ps) - 1
 
-"""Number of vertices in axis, which is 1 + number of intervals"""
+"""
+    length(ps::PiecewisePolynomial)
+
+Number of vertices in axis, which is 1 + number of intervals
+"""
 Base.length(ps::PiecewisePolynomial) = length(ps.τ)
 
-"""Type of the polynomial constants."""
+"""
+    eltype(::PiecewisePolynomial{X,T})
+
+Type of the polynomial constants.
+"""
 Base.eltype(::PiecewisePolynomial{X,T}) where {X,T} = T
 
 
@@ -44,7 +63,11 @@ function (cs::PiecewisePolynomial)(x::A) where {A <: Real}
     evalpoly(x - cs.τ[i], view(cs.c, :, i))
 end
 
-"""Evaluate a piecewise polynomial at a series of `x` values and write into `y`."""
+"""
+    evaluate!(cs::PiecewisePolynomial, x::AbstractVector, y::AbstractVector)
+
+Evaluate a piecewise polynomial at a series of `x` values and write into `y`.
+"""
 function evaluate!(cs::PiecewisePolynomial, x::AbstractVector, y::AbstractVector)
     # Index of first greater-than-or-equal-to x.
     k = 1
@@ -60,6 +83,8 @@ function evaluate!(cs::PiecewisePolynomial, x::AbstractVector, y::AbstractVector
 end
 
 """
+    integral_in_interval(cs::PiecewisePolynomial{X,T}, i, x::A) where {A <: Real, X, T}
+
 Integrate a spline from a knot at `i` to the value `x`.
 # (((A(1/4)*cs.c[4, i] * Δ + A(1/3)*cs.c[3, i]) * Δ + A(1/2)*cs.c[2, i]) * Δ + cs.c[1, i])*Δ
 """
@@ -80,6 +105,8 @@ end
 
 
 """
+    integrate(cs::PiecewisePolynomial, x1::A, x2::A) where {A <: Real}
+
 Integrate a spline from `x1` to `x2`.
 """
 function integrate(cs::PiecewisePolynomial, x1::A, x2::A) where {A <: Real}
@@ -99,6 +126,8 @@ end
 
 
 """
+    derivative(cs::PiecewisePolynomial{X,T}) where {X,T}
+
 Given a spline, create a new spline that is its derivative.
 """
 function derivative(cs::PiecewisePolynomial{X,T}) where {X,T}
@@ -114,6 +143,8 @@ end
 
 
 """
+    Base.:*(cs1::PiecewisePolynomial{X,T}, cs2::PiecewisePolynomial{X,T}) where {X,T}
+
 Multiply two splines of order `m1` and `m2` to get a spline of order `m1+m2`.
 This only works if the two splines have the same abcissa.
 """
