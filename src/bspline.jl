@@ -1,8 +1,3 @@
-# These algorithms are from Schumaker's book, Spline Functions: Basic Theory, 3rd ed.
-# They generate the values, derivatives, and integrals of B-splines
-# directly from an axis with its multiplicity. They don't create an intermediate
-# representation of the polynomial for the B-spline.
-
 
 @doc raw"""
     generate_normalized_bsplines!(N::AbstractVector{T}, y::AbstractVector, l, m, x::T) where {T}
@@ -37,11 +32,14 @@ function generate_normalized_bsplines!(
     return nothing
 end
 
+@doc raw"""
+    evaluate_bspline56(c::AbstractArray{T}, y::AbstractArray, m, x::T) where {T}
 
-# Algorithm 5.6: Evaluation of s(x) for Given a ≤ x < b.
-# c are the expansion coefficients. m is the degrees of freedom, order + K.
-# The expansion coefficients are numbered such that the first interval is 1-order.
-# The next interval is 2-order, the next 3-order.
+Algorithm 5.6: Evaluation of s(x) for Given a ≤ x < b.
+c are the expansion coefficients. m is the degrees of freedom, order + K.
+The expansion coefficients are numbered such that the first interval is 1-order.
+The next interval is 2-order, the next 3-order.
+"""
 function evaluate_bspline56(c::AbstractArray{T}, y::AbstractArray, m, x::T) where {T}
     l = searchsortedlast(y, x)
     N = zeros(T, m + 1)
@@ -76,10 +74,13 @@ function evaluate_bspline(c::AbstractArray{T}, y::AbstractArray, m, x::T) where 
     cx[m]
 end
 
+@doc raw"""
+    derivative_expansion_coefficients!(cd, c::AbstractVector{T}, m) where T
 
-# Algorithm 5.10. Calculation of expansion coefficient matrix for derivatives.
-# m is the order. c is the coefficient vector.
-# Initialize `cd=zeros(T, m, length(c))`.
+Algorithm 5.10. Calculation of expansion coefficient matrix for derivatives.
+m is the order. c is the coefficient vector.
+Initialize `cd=zeros(T, m, length(c))`.
+"""
 function derivative_expansion_coefficients!(cd, c::AbstractVector{T}, m) where T
     n = length(c)
     for init in 1:n
@@ -99,19 +100,26 @@ function derivative_expansion_coefficients!(cd, c::AbstractVector{T}, m) where T
     nothing
 end
 
+@doc raw"""
+    derivative_at(cd, m, d, x)
 
-# Algorithm 5.11 Compute D^{d-1}s(x) for given a ≤ x < b
-# c is expansion coefficient. cd is derivatives matrix of expansion coefficient.
-# m is order. d is derivative, x is value at which to evaluate.
+Algorithm 5.11 Compute D^{d-1}s(x) for given a ≤ x < b
+c is expansion coefficient. cd is derivatives matrix of expansion coefficient.
+m is order. d is derivative, x is value at which to evaluate.
+"""
 function derivative_at(cd, m, d, x)
     l = searchsortedlast(y, x)
     return evaluate_bspline(cd[d, :], y, m - d + 1, x)
 end
 
 
-# Algorithm 5.12. Compute all derivatives
-# Fill `s` with an array of all derivatives of the spline, starting from the 0th derivative.
-# `cd` - the derivatives matrix of the expansion coefficient.
+@doc raw"""
+    all_derivatives!(s::AbstractVector, cd, m, x)
+
+Algorithm 5.12. Compute all derivatives
+Fill `s` with an array of all derivatives of the spline, starting from the 0th derivative.
+`cd` - the derivatives matrix of the expansion coefficient.
+"""
 function all_derivatives!(s::AbstractVector, cd, m, x)
     l = searchsortedlast(y, x)
     s[m] = cd[m, l]

@@ -1,9 +1,9 @@
-# This file is a traditional cubic splines interpolation, including
-# monotonic splines.
 using Base.Sort
 using LinearAlgebra
 
 @doc raw"""
+    global_derivatives!(τ, f::AbstractVector{T}, fp) where {T <: Real}
+
 τ are the abcissa from 1 to N+1. f are the known values of length N+1.
 fp_bounds are derivatives at the first and last endpoint.
 fp is the output, of length N + 1.
@@ -55,6 +55,8 @@ end
 
 
 """
+    cubic_spline_coefficients!(τ, f::AbstractVector{T}, s, c) where {T <: Real}
+
 Given an abcissa, τ, of length N+1 values f of length N+1, and derivatives s
 of length N+1, this computes the 4xN matrix c of cubic coefficients.
 Conte and deBoor Eq. 4.55
@@ -74,6 +76,8 @@ end
 
 
 """
+    deboor_swartz_criterion(s::T, sm1, sp1) where {T <: Real}
+
 "Accurate Monotonicity Preserving Cubic Interpolation" by James M Hyman. 1983.
 """
 function deboor_swartz_criterion(s::T, sm1, sp1) where {T <: Real}
@@ -93,6 +97,8 @@ end
 
 
 """
+    hyman_criterion(s::T, sm1, sp1) where {T <: Real}
+
 This comes from Hyman's paper but is modified by the R implementation of splinefun,
 which Simon Wood wrote. I didn't understand from the paper the exact structure of
 decisions to take in the function.
@@ -114,6 +120,8 @@ end
 
 
 """
+    project_to_monotonicity!(x, f, s)
+
 Uses Hyman piecewise monotonicity.
 """
 function project_to_monotonicity!(x, f, s)
@@ -135,6 +143,8 @@ end
 
 
 """
+    hyman_coefficients!(τ, f::AbstractVector{T}, s, c) where {T <: Real}
+
 This is how splinefun sets the coefficients. Seems to have the same
 result as the code above.
 """
@@ -161,14 +171,27 @@ function hyman_coefficients!(τ, f::AbstractVector{T}, s, c) where {T <: Real}
 end
 
 
-# Options for endpoints
+"""
+    ZeroDerivativeEndpoints
+
+An option to set endpoints to have zero derivatives.
+"""
 struct ZeroDerivativeEndpoints
 end
 
+"""
+    FlatEndpoints
+
+An option to have endpoints have zero second derivative.
+"""
 struct FlatEndpoints
 end
 
-# Options for monotonicity.
+"""
+    FreeSlope
+
+The slope can be whatever the solver determines.
+"""
 struct FreeSlope
 end
 
@@ -176,6 +199,11 @@ function project_slope!(::FreeSlope, τ, f, s)
 end
 
 
+"""
+    Monotonic
+
+Restrict the slope to be monotonic.
+"""
 struct Monotonic
 end
 
@@ -197,6 +225,13 @@ function cubic_spline(
 end
 
 """
+    cubic_spline(
+        τ::AbstractVector{X},
+        f::AbstractVector{T},
+        fp::AbstractVector{T};
+        slope=FreeSlope()
+    ) where {X <: Real, T <: Real}
+
 Creates a cubic spline on abcissa `τ` with values `f` and endpoint slopes
 equal to `fp[1]` and `fp[2]`.
 """

@@ -102,6 +102,68 @@ bsplineq_recursive(y, m, i, x)
 bsplineq_recursive(y, m, i, x, n)
 ```
 
+## Solving for B-Splines by Constraining Piecewise Splines
+
+
+These functions solve for B-splines of order 2 by constructing a matrix
+of constraints and solving that matrix for coefficients of each part of the
+polynomial. This will give you coefficients for any B-spline. If you want
+to know coefficients for B-splines on an integer axis of a given order, then
+run this with the Rational type, and it should agree with published examples.
+
+This isn't used, in practice, when working with B-splines, because you don't need
+to represent them as polynomials. Instead, there are other functions that evaluate
+the B-spline directly from the axis and smoothness conditions that define it.
+
+```@docs
+bspline_by_matrix!
+reduce_axis(multiplicity::AbstractVector, order, i)
+polyspline_constraints!(axis::AbstractArray{T}, multiplicity::AbstractVector{Int}, order) where {T}
+```
+
+## B-Splines (Official version)
+
+These algorithms are from Schumaker's book, Spline Functions: Basic Theory, 3rd ed.
+They generate the values, derivatives, and integrals of B-splines
+directly from an axis with its multiplicity. They don't create an intermediate
+representation of the polynomial for the B-spline.
+
+```@docs
+generate_normalized_bsplines!
+evaluate_bspline56(c::AbstractArray{T}, y::AbstractArray, m, x::T) where {T}
+evaluate_bspline(c::AbstractArray{T}, y::AbstractArray, m, x::T) where {T}
+derivative_expansion_coefficients!(cd, c::AbstractVector{T}, m) where T
+derivative_at(cd, m, d, x)
+all_derivatives!(s::AbstractVector, cd, m, x)
+```
+
+## Cubic Splines
+
+This file is a traditional cubic splines interpolation, including
+monotonic splines.
+
+```@docs
+global_derivatives!(τ, f::AbstractVector{T}, fp) where {T <: Real}
+cubic_spline_coefficients!(τ, f::AbstractVector{T}, s, c) where {T <: Real}
+deboor_swartz_criterion(s::T, sm1, sp1) where {T <: Real}
+hyman_criterion(s::T, sm1, sp1) where {T <: Real}
+project_to_monotonicity!(x, f, s)
+hyman_coefficients!(τ, f::AbstractVector{T}, s, c) where {T <: Real}
+ZeroDerivativeEndpoints
+FlatEndpoints
+FreeSlope
+Monotonic
+cubic_spline
+```
+
+## Schumaker
+
+These are other algorithms from Schumaker's book.
+
+```@docs
+piecewise_representation!
+```
+
 ## Index
 
 ```@index

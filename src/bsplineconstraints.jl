@@ -1,14 +1,5 @@
 using Logging
 
-# This notebook solves for B-splines of order 2 by constructing a matrix
-# of constraints and solving that matrix for coefficients of each part of the
-# polynomial. This will give you coefficients for any B-spline. If you want
-# to know coefficients for B-splines on an integer axis of a given order, then
-# run this with the Rational type, and it should agree with published examples.
-#
-# This isn't used, in practice, when working with B-splines, because you don't need
-# to represent them as polynomials. Instead, there are other functions that evaluate
-# the B-spline directly from the axis and smoothness conditions that define it.
 
 # What's a derivative? of sum(c_i x^(i-1), {i, 1, n})
 # c[1] x^0 + c[2] x^1 + c[3] x^2 + c[4] x^3   # sum(c_i x^(i-1), {i, 1, n}), n=4.
@@ -85,6 +76,13 @@ function pointsum!(mat::AbstractArray{T}, axis, interval, row, order) where {T}
 end
 
 @doc raw"""
+    bspline_by_matrix!(
+      axis::AbstractArray{T},
+      coeffs::AbstractArray{T},
+      multiplicity::AbstractVector{Int},
+      order, normalized
+    ) where {T}
+
 Calculate coefficients of a b-spline of order m, degree m-1
 by sending an axis of length m+1 and a coefficient matrix of size mxm,
 into which are written columns of coefficients for the polynomial of each interval.
@@ -166,6 +164,8 @@ end
 
 
 @doc raw"""
+    reduce_axis(multiplicity::AbstractVector, order, i)
+
 This extracts from a multiplicity vector the support for the `i`th B-spline.
 There is an axis where `length(axis)=length(multiplicity)`. This axis will, in general,
 support multiple B-splines. This function returns a sub-range of that axis
@@ -187,6 +187,8 @@ end
 
 
 @doc raw"""
+    polyspline_constraints!(axis::AbstractArray{T}, multiplicity::AbstractVector{Int}, order) where {T}
+
 This reads a list of multiplicities and converts that into a matrix that represents
 the constraints indicated by those multiplicites. The resulting matrix defines the space
 of the given polynomial spline on this axis.

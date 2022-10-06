@@ -38,6 +38,12 @@ end
 
 
 @doc raw"""
+    piecewise_representation!(
+        w::AbstractArray{T},
+        cd::AbstractArray{T},
+        τ::AbstractVector
+        ) where {T}
+
 Algorithm 5.15: Construct a piecewise polynomial representation of a polynomial spline
 that is represented by spline coefficients. This converts out of B-splines to the polynomial
 representation. If there are more than about 2 evaluations of each spline interval, this
