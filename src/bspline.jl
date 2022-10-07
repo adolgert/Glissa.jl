@@ -35,8 +35,9 @@ end
 @doc raw"""
     evaluate_bspline56(c::AbstractArray{T}, y::AbstractArray, m, x::T) where {T}
 
-Algorithm 5.6: Evaluation of s(x) for Given a ≤ x < b.
-c are the expansion coefficients. m is the degrees of freedom, order + K.
+Algorithm 5.6: Evaluation of ``s(x)`` for Given ``a \le x < b``.
+This is a less-efficient algorithm because it takes ``(3m^2+3m-4)/2`` total operations.
+`c`` are the expansion coefficients. `m`` is the degrees of freedom, order + `K`.
 The expansion coefficients are numbered such that the first interval is 1-order.
 The next interval is 2-order, the next 3-order.
 """

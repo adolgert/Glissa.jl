@@ -124,11 +124,18 @@ function divdiff(axis, f)
 end
 
 
-"""
+@doc raw"""
 DividedDifference{T}
 
-A recursive implementation of divided differences. This struct memo-izes the
-divided differences as they are created.
+A recursive implementation of divided differences.
+
+$[\tau_i, \tau_{i+1},\ldots,\tau_j]f$
+
+A divided difference is the
+coefficient on the highest degree term of the polynomial that exactly
+interpolates the function $f$ at abcissa values $[\tau_i, \tau_{i+1},\ldots,\tau_j]$.
+
+This struct memo-izes the divided differences as they are created.
 """
 mutable struct DividedDifference{T}
     memo::Dict{Tuple{Int64,Int64},T}
@@ -227,7 +234,7 @@ end
     splinen_divided(y, m, i, x)
 
 An N version of the B-spline on an axis y, order m, index i, at x.
-This version is defined using divided differences.
+This version is a normalization of `splineq_divided`.
 """
 function splinen_divided(y, m, i, x)
     (y[i + m] - y[i]) * splineq_divided(y, m, i, x)

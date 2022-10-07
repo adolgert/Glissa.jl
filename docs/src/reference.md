@@ -4,6 +4,41 @@
 CurrentModule = Glissa
 ```
 
+## B-Splines (Official version)
+
+These algorithms are from Schumaker's book, Spline Functions: Basic Theory, 3rd ed.
+They generate the values, derivatives, and integrals of B-splines
+directly from an axis with its multiplicity. They don't create an intermediate
+representation of the polynomial for the B-spline.
+
+```@docs
+generate_normalized_bsplines!
+evaluate_bspline56(c::AbstractArray{T}, y::AbstractArray, m, x::T) where {T}
+evaluate_bspline(c::AbstractArray{T}, y::AbstractArray, m, x::T) where {T}
+derivative_expansion_coefficients!(cd, c::AbstractVector{T}, m) where T
+derivative_at(cd, m, d, x)
+all_derivatives!(s::AbstractVector, cd, m, x)
+```
+
+## Cubic Splines
+
+This file is a traditional cubic splines interpolation, including
+monotonic splines.
+
+```@docs
+global_derivatives!(τ, f::AbstractVector{T}, fp) where {T <: Real}
+cubic_spline_coefficients!(τ, f::AbstractVector{T}, s, c) where {T <: Real}
+deboor_swartz_criterion(s::T, sm1, sp1) where {T <: Real}
+hyman_criterion(s::T, sm1, sp1) where {T <: Real}
+project_to_monotonicity!(x, f, s)
+hyman_coefficients!(τ, f::AbstractVector{T}, s, c) where {T <: Real}
+ZeroDerivativeEndpoints
+FlatEndpoints
+FreeSlope
+Monotonic
+cubic_spline
+```
+
 ## Axis Handling
 
 These are helper functions to convert between different representations of
@@ -65,11 +100,10 @@ normalized_bspline(i::Integer, kp1::Integer, λ::Vector{T}, x::T) where {T <: Re
 
 ## Divided Differences
 
-This section is about calculating divided differences.
+This section is about calculating B-splines using divided differences.
 Divided differences are the most common first presentation of B-splines.
-When the axis has no repeated knots, these are simple to calculate, but I'm
-having trouble finding clear descriptions of divided differences when the
-knots repeat.
+When the axis has no repeated knots, these are simple to calculate, and the book
+by Dierckx describes how to define them when knots repeat.
 
 You will see below several versions of definitions, so that I can check them
 against each other.
@@ -119,41 +153,6 @@ the B-spline directly from the axis and smoothness conditions that define it.
 bspline_by_matrix!
 reduce_axis(multiplicity::AbstractVector, order, i)
 polyspline_constraints!(axis::AbstractArray{T}, multiplicity::AbstractVector{Int}, order) where {T}
-```
-
-## B-Splines (Official version)
-
-These algorithms are from Schumaker's book, Spline Functions: Basic Theory, 3rd ed.
-They generate the values, derivatives, and integrals of B-splines
-directly from an axis with its multiplicity. They don't create an intermediate
-representation of the polynomial for the B-spline.
-
-```@docs
-generate_normalized_bsplines!
-evaluate_bspline56(c::AbstractArray{T}, y::AbstractArray, m, x::T) where {T}
-evaluate_bspline(c::AbstractArray{T}, y::AbstractArray, m, x::T) where {T}
-derivative_expansion_coefficients!(cd, c::AbstractVector{T}, m) where T
-derivative_at(cd, m, d, x)
-all_derivatives!(s::AbstractVector, cd, m, x)
-```
-
-## Cubic Splines
-
-This file is a traditional cubic splines interpolation, including
-monotonic splines.
-
-```@docs
-global_derivatives!(τ, f::AbstractVector{T}, fp) where {T <: Real}
-cubic_spline_coefficients!(τ, f::AbstractVector{T}, s, c) where {T <: Real}
-deboor_swartz_criterion(s::T, sm1, sp1) where {T <: Real}
-hyman_criterion(s::T, sm1, sp1) where {T <: Real}
-project_to_monotonicity!(x, f, s)
-hyman_coefficients!(τ, f::AbstractVector{T}, s, c) where {T <: Real}
-ZeroDerivativeEndpoints
-FlatEndpoints
-FreeSlope
-Monotonic
-cubic_spline
 ```
 
 ## Schumaker
